@@ -1,7 +1,12 @@
+html {
+    height: 100%;
+}
+
 body {
     font-family: sans-serif;
-    margin: 20px;
+    margin: 0; /* MODIFIED - was 20px */
     background-color: #f4f4f4;
+    height: 100%; /* ADDED/MODIFIED */
 }
 
 h1, h2 {
@@ -47,9 +52,9 @@ h1, h2 {
 
 /* Side Panel Specific Styles */
 .sidepanel-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh; /* Full height of the side panel */
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* Header, main content (responseArea), footer */
+    height: 100%; /* MODIFIED - was 100vh */
     padding: 10px;
     box-sizing: border-box;
 }
@@ -79,13 +84,13 @@ h1, h2 {
 }
 
 #responseArea {
-    flex-grow: 1; /* Takes up available space */
-    overflow-y: auto; /* Scrollable */
+    overflow-y: auto; /* Scrollable - ensure this remains */
     padding: 10px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
     margin-bottom: 10px;
+    min-height: 0; /* ADDED */
 }
 
 #responseArea .user-message, #responseArea .ai-message, #responseArea .error-message, .welcome-message {

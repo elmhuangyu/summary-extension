@@ -3,7 +3,7 @@ console.log("ai_service.js loaded");
 
 async function getStoredSettings() {
     return new Promise((resolve) => {
-        chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language'], resolve);
+        chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel'], resolve);
     });
 }
 
@@ -48,8 +48,8 @@ async function callOpenAI(apiKey, messages, maxTokens = 2000, model = "gpt-3.5-t
 }
 
 // --- Gemini API Integration ---
-async function callGemini(apiKey, contents, language, maxOutputTokens = 2048) {
-    const modelName = "gemini-1.5-pro";
+async function callGemini(apiKey, contents, language, geminiModel, maxOutputTokens = 2048) { // Added geminiModel
+    const modelName = geminiModel || "gemini-1.5-pro"; // Use selected model or fallback
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const requestBody = {
@@ -166,7 +166,7 @@ Question: ${data.question}` }] });
         } else {
             return Promise.reject(new Error("Invalid AI service type requested for Gemini."));
         }
-        return callGemini(settings.geminiApiKey, geminiContents, languageToUse);
+        return callGemini(settings.geminiApiKey, geminiContents, languageToUse, settings.geminiModel);
 
     } else {
         return Promise.reject(new Error("Unknown or unsupported AI provider selected."));

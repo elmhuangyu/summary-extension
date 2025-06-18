@@ -214,15 +214,8 @@ function updateGeminiThinkingModeVisibility() {
 
 // --- Helper to get page content ---
 async function getPageContentFromContentScript() {
-            addMessageToPanel("Welcome! Please configure your AI provider API keys in the extension settings (right-click the extension icon and choose 'Options').", "ai-message");
-        } else if (currentAiProvider === 'openai' && !settings.openaiApiKey) {
-            addMessageToPanel("OpenAI is your default provider, but the API key is missing. Please set it in options.", "error-message");
-        } else if (currentAiProvider === 'gemini' && !settings.geminiApiKey) {
-            addMessageToPanel("Gemini is your default provider, but the API key is missing. Please set it in options.", "error-message");
-        }
-    });
-
-    // Set AI provider based on panel dropdown
+    // Corrected: Removed the duplicated API key check logic and misplaced });
+    // The function should start with its own logic.
     loadingIndicator.style.display = 'block';
     responseArea.querySelector('.welcome-message')?.remove(); // Remove welcome message
     try {
@@ -275,10 +268,8 @@ summarizeBtn.addEventListener('click', async () => {
         loadingIndicator.style.display = 'block';
 try {
     let enableThinking = false;
-    if (aiProviderSelectPanel.value === 'gemini' || (aiProviderSelectPanel.value === 'default' && currentAiProvider === 'gemini')) {
-        if (geminiThinkingModeArea.style.display === 'block') { // only consider if visible
-            enableThinking = geminiThinkingModeCheckbox.checked;
-        }
+    if (geminiThinkingModeArea.style.display === 'block' && geminiThinkingModeCheckbox.checked) {
+        enableThinking = true;
     }
     const summary = await callAIService('summarize', content, currentAiProvider, currentLanguage, enableThinking);
     addMessageToPanel(summary, 'ai-message');
@@ -309,10 +300,8 @@ sendChatBtn.addEventListener('click', async () => {
         loadingIndicator.style.display = 'block';
 try {
     let enableThinking = false;
-    if (aiProviderSelectPanel.value === 'gemini' || (aiProviderSelectPanel.value === 'default' && currentAiProvider === 'gemini')) {
-         if (geminiThinkingModeArea.style.display === 'block') { // only consider if visible
-            enableThinking = geminiThinkingModeCheckbox.checked;
-        }
+    if (geminiThinkingModeArea.style.display === 'block' && geminiThinkingModeCheckbox.checked) {
+        enableThinking = true;
     }
     const answer = await callAIService('chat', { question: question, context: content }, currentAiProvider, currentLanguage, enableThinking);
     addMessageToPanel(answer, 'ai-message');

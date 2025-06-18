@@ -8,14 +8,6 @@
     <div class="sidepanel-container">
         <header>
             <h1>AI Assistant</h1>
-            <div class="ai-selector-panel">
-                <label for="aiProviderPanel">AI:</label>
-                <select id="aiProviderPanel" name="aiProviderPanel">
-                    <option value="default">(Default)</option>
-                    <option value="openai">OpenAI</option>
-                    <option value="gemini">Gemini</option>
-                </select>
-            </div>
         </header>
 
         <div id="responseArea">
@@ -28,6 +20,18 @@
         </div>
 
         <footer>
+            <div class="ai-selector-panel">
+                <label for="aiProviderPanel">AI:</label>
+                <select id="aiProviderPanel" name="aiProviderPanel">
+                    <option value="default">(Default)</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="gemini">Gemini</option>
+                </select>
+                <div id="geminiThinkingModeArea" style="display: none;">
+                    <input type="checkbox" id="geminiThinkingMode" name="geminiThinkingMode">
+                    <label for="geminiThinkingMode">Enable Thinking</label>
+                </div>
+            </div>
             <button id="summarizeBtn">Summarize this page</button>
             <div class="chat-area">
                 <textarea id="chatInput" placeholder="Ask a question..."></textarea>

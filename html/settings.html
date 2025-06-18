@@ -47,6 +47,31 @@
             </select>
         </div>
 
+        <h2>OpenAI-Compatible Providers</h2>
+        <div id="openaiCompatibleProvidersList">
+            <!-- Providers will be listed here -->
+        </div>
+        <fieldset>
+            <legend>Add New OpenAI-Compatible Provider</legend>
+            <div>
+                <label for="providerName">Name:</label>
+                <input type="text" id="providerName" name="providerName" required>
+            </div>
+            <div>
+                <label for="providerBaseUrl">Base URL:</label>
+                <input type="url" id="providerBaseUrl" name="providerBaseUrl" required placeholder="e.g., https://api.example.com/v1">
+            </div>
+            <div>
+                <label for="providerModel">Model Name:</label>
+                <input type="text" id="providerModel" name="providerModel" required placeholder="e.g., gpt-3.5-turbo">
+            </div>
+            <div>
+                <label for="providerAccessToken">Access Token:</label>
+                <input type="password" id="providerAccessToken" name="providerAccessToken" required>
+            </div>
+            <button type="button" id="addProviderBtn">Add Provider</button>
+        </fieldset>
+
         <button type="submit">Save Settings</button>
     </form>
     <p id="statusMessage"></p>

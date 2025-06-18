@@ -2,16 +2,19 @@
 console.log("ai_service.js loaded");
 
 async function getStoredSettings() {
+    // Added openaiCompatibleProviders to the list of keys to fetch
     return new Promise((resolve) => {
-        chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel'], resolve);
+        chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel', 'openaiCompatibleProviders'], resolve);
     });
 }
 
 // --- OpenAI API Integration ---
-async function callOpenAI(apiKey, messages, maxTokens = 2000, model = "gpt-3.5-turbo") {
+// Modified signature to include baseUrl
+async function callOpenAI(apiKey, messages, maxTokens = 2000, model = "gpt-3.5-turbo", baseUrl = 'https://api.openai.com/v1/chat/completions') {
     // 'messages' is expected to be an array of {role, content} objects,
     // including any system messages for language or persona.
-    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+    // Use the provided baseUrl for the API call.
+    const apiUrl = baseUrl; // Assuming baseUrl is the full path to the completions endpoint
 
     try {
         const response = await fetch(apiUrl, {
@@ -48,8 +51,8 @@ async function callOpenAI(apiKey, messages, maxTokens = 2000, model = "gpt-3.5-t
 }
 
 // --- Gemini API Integration ---
-async function callGemini(apiKey, contents, language, geminiModel, maxOutputTokens = 2048) { // Added geminiModel
-    const modelName = geminiModel || "gemini-1.5-pro"; // Use selected model or fallback
+async function callGemini(apiKey, contents, language, geminiModel, enableThinking, maxOutputTokens = 2048) { // Added geminiModel and enableThinking
+    const modelName = geminiModel || "gemini-2.0-flash"; // Use selected model or fallback, updated default
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     const requestBody = {
@@ -62,6 +65,11 @@ async function callGemini(apiKey, contents, language, geminiModel, maxOutputToke
             temperature: 0.7
         }
     };
+
+    // Add thinkingConfig if enableThinking is true and model is gemini-2.5-flash-lite-preview-06-17
+    if (enableThinking && modelName === "gemini-2.5-flash-lite-preview-06-17") {
+        requestBody.generationConfig.thinkingConfig = { "thinkingBudget": -1 };
+    }
 
     try {
         const response = await fetch(apiUrl, {
@@ -101,13 +109,23 @@ async function callGemini(apiKey, contents, language, geminiModel, maxOutputToke
 }
 
 // --- Main AI Service Function ---
-async function callAIService(type, data, preferredProvider, preferredLanguage) {
+async function callAIService(type, data, preferredProvider, preferredLanguage, enableThinking = false) {
     const settings = await getStoredSettings();
-    let providerToUse = preferredProvider;
+    let openaiCompatibleProviders = settings.openaiCompatibleProviders || [];
+    let providerToUse = preferredProvider; // e.g., 'openai', 'gemini', 'My Custom Provider', or 'default'
 
     if (providerToUse === 'default') {
-        providerToUse = settings.defaultAi || 'openai';
+        const defaultProviderName = settings.defaultAi || 'openai';
+        // Check if the default is one of the custom providers
+        if (openaiCompatibleProviders.some(p => p.name === defaultProviderName)) {
+            providerToUse = defaultProviderName;
+        } else {
+            // Fallback to official 'openai' or 'gemini' if default is not a known custom one
+            providerToUse = (defaultProviderName === 'gemini') ? 'gemini' : 'openai';
+        }
     }
+    // If preferredProvider was a specific custom name, providerToUse is already set to that name.
+
     const languageToUse = preferredLanguage || settings.language || 'en';
 
     if (providerToUse === 'openai') {
@@ -166,9 +184,37 @@ Question: ${data.question}` }] });
         } else {
             return Promise.reject(new Error("Invalid AI service type requested for Gemini."));
         }
-        return callGemini(settings.geminiApiKey, geminiContents, languageToUse, settings.geminiModel);
+        // Pass the enableThinking parameter received by callAIService
+        return callGemini(settings.geminiApiKey, geminiContents, languageToUse, settings.geminiModel, enableThinking);
 
-    } else {
-        return Promise.reject(new Error("Unknown or unsupported AI provider selected."));
+    } else if (openaiCompatibleProviders.some(p => p.name === providerToUse)) {
+        const customProvider = openaiCompatibleProviders.find(p => p.name === providerToUse);
+        if (!customProvider || !customProvider.accessToken || !customProvider.baseUrl || !customProvider.model) {
+            return Promise.reject(new Error(`Configuration for custom provider "${providerToUse}" is incomplete.`));
+        }
+
+        let openAIMessages = [
+            { role: "system", content: `You are a helpful assistant. Please respond in ${languageToUse}.` }
+        ];
+        if (type === 'summarize') {
+            openAIMessages.push({ role: "user", content: `Please summarize the following content:
+
+${data}` });
+        } else if (type === 'chat') {
+            if (data.context) {
+                openAIMessages.push({ role: "user", content: `Based on the following content:
+${data.context}
+
+Question: ${data.question}` });
+            } else {
+                openAIMessages.push({ role: "user", content: data.question });
+            }
+        } else {
+            return Promise.reject(new Error(`Invalid AI service type requested for ${providerToUse}.`));
+        }
+        // Use customProvider.accessToken, openAIMessages, a default for maxTokens, customProvider.model, and customProvider.baseUrl
+        return callOpenAI(customProvider.accessToken, openAIMessages, 2000, customProvider.model, customProvider.baseUrl);
+    } else { // Fallback for unknown provider
+        return Promise.reject(new Error(`Unknown or unsupported AI provider selected: ${providerToUse}`));
     }
 }

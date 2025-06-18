@@ -6,8 +6,11 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 const summarizeBtn = document.getElementById('summarizeBtn');
 const chatInput = document.getElementById('chatInput');
 const sendChatBtn = document.getElementById('sendChatBtn');
+const geminiThinkingModeCheckbox = document.getElementById('geminiThinkingMode');
+const geminiThinkingModeArea = document.getElementById('geminiThinkingModeArea');
 
 let currentAiProvider = 'default'; // Will be updated from storage
+let currentGeminiModel = ''; // Will be updated from storage
 let currentLanguage = 'en'; // Will be updated from storage
 let pageMarkdown = null; // To cache page content
 
@@ -24,19 +27,193 @@ function addMessageToPanel(text, type) {
 
 // --- Load settings and initialize ---
 document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get(['defaultAi', 'language', 'openaiApiKey', 'geminiApiKey'], (settings) => {
-        if (settings.defaultAi) {
-            currentAiProvider = settings.defaultAi;
-            // Update panel selector if a default is set, but keep '(Default)' selected initially
-            // The actual AI provider for a request will be determined by currentAiProvider.
-        }
-        if (settings.language) {
+    // Order of operations:
+    // 1. Load all relevant settings from storage.
+    // 2. Update global variables (currentAiProvider, currentLanguage, currentGeminiModel).
+    // 3. Populate AI Provider dropdown.
+    // 4. Call updateGeminiThinkingModeVisibility to set initial state of the checkbox area.
+    // 5. Set up event listeners.
+
+    chrome.storage.local.get(['defaultAi', 'language', 'openaiApiKey', 'geminiApiKey', 'geminiModel', 'openaiCompatibleProviders'], (settings) => {
+        if (settings.language) { // Language is independent
             currentLanguage = settings.language;
         }
-        console.log('Sidepanel loaded settings:', { defaultAi: settings.defaultAi, language: settings.language });
+        // currentAiProvider will be set by populateAiProviderDropdown based on stored default or its current value
+        // currentGeminiModel will also be set/updated
 
-        // Check if API keys are set, if not, prompt user.
-        if (!settings.openaiApiKey && !settings.geminiApiKey) {
+        const customProviders = settings.openaiCompatibleProviders || [];
+        // Initialize currentAiProvider before populating, use stored default if available
+        // The populate function will then try to select this value or 'default'.
+        currentAiProvider = settings.defaultAi || 'default'; // Start with the stored default preference for provider
+        currentGeminiModel = settings.geminiModel || "gemini-2.0-flash"; // Default Gemini model
+
+        populateAiProviderDropdown(customProviders, settings.defaultAi); // This will set aiProviderSelectPanel.value
+
+        // After populating and setting the panel's value, update currentAiProvider based on the panel.
+        // This is important if the stored defaultAi was a custom provider that got removed,
+        // populateAiProviderDropdown would reset to 'default', and we need currentAiProvider to reflect that.
+        currentAiProvider = aiProviderSelectPanel.value;
+
+
+        console.log('Sidepanel loaded settings:', {
+            defaultAi: settings.defaultAi,
+            language: settings.language,
+            geminiModel: settings.geminiModel,
+            effectiveGeminiModel: currentGeminiModel,
+            initialAiProviderInPanel: currentAiProvider, // Reflects what's selected in panel
+            customProvidersCount: customProviders.length
+        });
+
+        updateGeminiThinkingModeVisibility(); // Set initial visibility based on the potentially updated currentAiProvider
+
+        // Check if API keys are set for the *effective* provider
+        // This logic might need refinement if 'default' points to a custom provider with missing keys
+        let effectiveProviderForAPIKeyCheck = currentAiProvider;
+        if (currentAiProvider === 'default') {
+            effectiveProviderForAPIKeyCheck = settings.defaultAi || 'openai'; // Check keys for the actual default
+        }
+
+        const isCustomProvider = customProviders.some(p => p.name === effectiveProviderForAPIKeyCheck);
+
+        if (!settings.openaiApiKey && !settings.geminiApiKey && !customProviders.some(p => p.accessToken)) {
+            addMessageToPanel("Welcome! Please configure your AI provider API keys or add a custom provider in the extension settings.", "ai-message");
+        } else if (effectiveProviderForAPIKeyCheck === 'openai' && !settings.openaiApiKey) {
+            addMessageToPanel("OpenAI is your selected provider, but the API key is missing. Please set it in options.", "error-message");
+        } else if (effectiveProviderForAPIKeyCheck === 'gemini' && !settings.geminiApiKey) {
+            addMessageToPanel("Gemini is your selected provider, but the API key is missing. Please set it in options.", "error-message");
+        } else if (isCustomProvider) {
+            const providerDetails = customProviders.find(p => p.name === effectiveProviderForAPIKeyCheck);
+            if (!providerDetails || !providerDetails.accessToken || !providerDetails.baseUrl || !providerDetails.model) {
+                addMessageToPanel(`The custom provider "${effectiveProviderForAPIKeyCheck}" is missing required configuration (e.g., access token). Please check settings.`, "error-message");
+            }
+        }
+    });
+
+    // Set AI provider based on panel dropdown
+    aiProviderSelectPanel.addEventListener('change', (event) => {
+        currentAiProvider = event.target.value; // This is correct, can be 'default', 'openai', 'gemini', or a custom name
+        console.log("AI Provider changed in panel to:", currentAiProvider);
+        // The message should reflect the actual provider if 'default' is chosen.
+        // This requires re-evaluating the default provider. For simplicity, keep as is or enhance later.
+        addMessageToPanel(`Switched to ${event.target.options[event.target.selectedIndex].text}.`, 'ai-message');
+        updateGeminiThinkingModeVisibility(); // Update visibility on provider change
+    });
+
+    // Also listen for changes from options page
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace === 'local') {
+            let needsUIRefresh = false;
+            if (changes.geminiModel) {
+                currentGeminiModel = changes.geminiModel.newValue || "gemini-2.0-flash";
+                console.log("Gemini model changed via storage: ", currentGeminiModel);
+                needsUIRefresh = true;
+            }
+            if (changes.defaultAi) {
+                console.log("Default AI provider changed via storage: ", changes.defaultAi.newValue);
+                // No direct change to currentAiProvider here, populateAiProviderDropdown will handle selection
+                needsUIRefresh = true;
+            }
+            if (changes.openaiCompatibleProviders) {
+                console.log("Custom providers changed via storage.");
+                needsUIRefresh = true;
+            }
+
+            if (needsUIRefresh) {
+                // Reload all relevant settings to ensure consistency
+                chrome.storage.local.get(['defaultAi', 'geminiModel', 'openaiCompatibleProviders'], (newSettings) => {
+                    currentGeminiModel = newSettings.geminiModel || "gemini-2.0-flash";
+                    const customProviders = newSettings.openaiCompatibleProviders || [];
+                    // currentAiProvider is preserved unless the selected option is removed
+                    // populateAiProviderDropdown will handle re-selecting or falling back to 'default'
+                    populateAiProviderDropdown(customProviders, newSettings.defaultAi);
+                    currentAiProvider = aiProviderSelectPanel.value; // Reflect dropdown's actual state
+                    updateGeminiThinkingModeVisibility();
+                    console.log("Sidepanel UI updated due to storage change.");
+                });
+            }
+        }
+    });
+});
+
+function populateAiProviderDropdown(customProviders, defaultAiSetting) {
+    const previouslySelectedValue = aiProviderSelectPanel.value || currentAiProvider || defaultAiSetting || 'default';
+    aiProviderSelectPanel.innerHTML = ''; // Clear existing options
+
+    // Add default options
+    const defaultOption = document.createElement('option');
+    defaultOption.value = 'default';
+    defaultOption.textContent = `(Default)${defaultAiSetting ? ` - ${defaultAiSetting.substring(0,20)}` : ''}`; // Show which one is default
+    aiProviderSelectPanel.appendChild(defaultOption);
+
+    const openaiOption = document.createElement('option');
+    openaiOption.value = 'openai';
+    openaiOption.textContent = 'OpenAI (Official)';
+    aiProviderSelectPanel.appendChild(openaiOption);
+
+    const geminiOption = document.createElement('option');
+    geminiOption.value = 'gemini';
+    geminiOption.textContent = 'Gemini (Official)';
+    aiProviderSelectPanel.appendChild(geminiOption);
+
+    // Add custom providers
+    customProviders.forEach(provider => {
+        const option = document.createElement('option');
+        option.value = provider.name; // Use unique name as value
+        option.textContent = provider.name; // Display name
+        aiProviderSelectPanel.appendChild(option);
+    });
+
+    // Set selected option
+    if (Array.from(aiProviderSelectPanel.options).some(opt => opt.value === previouslySelectedValue)) {
+        aiProviderSelectPanel.value = previouslySelectedValue;
+    } else {
+        aiProviderSelectPanel.value = 'default'; // Fallback if previously selected is removed
+    }
+    // Ensure currentAiProvider global variable matches the actual selection
+    // currentAiProvider = aiProviderSelectPanel.value; // This will be set by the event listener or after this call in DOMContentLoaded
+}
+
+
+function updateGeminiThinkingModeVisibility() {
+    // Determine the actual provider to check against, considering "(Default)" selection
+    let providerToCheck = aiProviderSelectPanel.value; // This is the value from the dropdown ('default', 'openai', 'gemini', 'customName')
+
+    if (providerToCheck === 'default') {
+        // Need to get the *actual* default provider name from storage to check if it's Gemini
+        chrome.storage.local.get(['defaultAi', 'geminiModel'], (settings) => {
+            const actualDefaultProvider = settings.defaultAi || 'openai'; // Fallback to openai if no defaultAi is set
+            currentGeminiModel = settings.geminiModel || "gemini-2.0-flash"; // Ensure currentGeminiModel is fresh
+
+            if (actualDefaultProvider === 'gemini' && currentGeminiModel === "gemini-2.5-flash-lite-preview-06-17") {
+                geminiThinkingModeArea.style.display = 'block';
+            } else {
+                geminiThinkingModeArea.style.display = 'none';
+                geminiThinkingModeCheckbox.checked = false;
+            }
+            console.log(`Gemini Thinking Mode (default flow): actualDefault=${actualDefaultProvider}, model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
+        });
+    } else if (providerToCheck === 'gemini') {
+        // If 'Gemini (Official)' is directly selected, use currentGeminiModel (already loaded from storage)
+        chrome.storage.local.get(['geminiModel'], (settings) => { // Ensure model is fresh
+            currentGeminiModel = settings.geminiModel || "gemini-2.0-flash";
+            if (currentGeminiModel === "gemini-2.5-flash-lite-preview-06-17") {
+                geminiThinkingModeArea.style.display = 'block';
+            } else {
+                geminiThinkingModeArea.style.display = 'none';
+                geminiThinkingModeCheckbox.checked = false;
+            }
+            console.log(`Gemini Thinking Mode (direct gemini): model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
+        });
+    } else {
+        // OpenAI or Custom provider selected
+        geminiThinkingModeArea.style.display = 'none';
+        geminiThinkingModeCheckbox.checked = false;
+        console.log(`Gemini Thinking Mode (openai/custom): provider=${providerToCheck}, visible=false`);
+    }
+}
+
+// --- Helper to get page content ---
+async function getPageContentFromContentScript() {
             addMessageToPanel("Welcome! Please configure your AI provider API keys in the extension settings (right-click the extension icon and choose 'Options').", "ai-message");
         } else if (currentAiProvider === 'openai' && !settings.openaiApiKey) {
             addMessageToPanel("OpenAI is your default provider, but the API key is missing. Please set it in options.", "error-message");
@@ -46,15 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Set AI provider based on panel dropdown
-    aiProviderSelectPanel.addEventListener('change', (event) => {
-        currentAiProvider = event.target.value;
-        console.log("AI Provider changed in panel to:", currentAiProvider);
-        addMessageToPanel(`Switched to ${currentAiProvider === 'default' ? 'default AI provider' : event.target.options[event.target.selectedIndex].text}.`, 'ai-message');
-    });
-});
-
-// --- Helper to get page content ---
-async function getPageContentFromContentScript() {
     loadingIndicator.style.display = 'block';
     responseArea.querySelector('.welcome-message')?.remove(); // Remove welcome message
     try {
@@ -106,7 +274,13 @@ summarizeBtn.addEventListener('click', async () => {
         console.log("Summarize button clicked. Content acquired. Ready for AI call.");
         loadingIndicator.style.display = 'block';
 try {
-    const summary = await callAIService('summarize', content, currentAiProvider, currentLanguage);
+    let enableThinking = false;
+    if (aiProviderSelectPanel.value === 'gemini' || (aiProviderSelectPanel.value === 'default' && currentAiProvider === 'gemini')) {
+        if (geminiThinkingModeArea.style.display === 'block') { // only consider if visible
+            enableThinking = geminiThinkingModeCheckbox.checked;
+        }
+    }
+    const summary = await callAIService('summarize', content, currentAiProvider, currentLanguage, enableThinking);
     addMessageToPanel(summary, 'ai-message');
 } catch (error) {
     console.error("Summarization error:", error);
@@ -134,7 +308,13 @@ sendChatBtn.addEventListener('click', async () => {
         console.log("Chat message sent. Content acquired (if any). Ready for AI call.");
         loadingIndicator.style.display = 'block';
 try {
-    const answer = await callAIService('chat', { question: question, context: content }, currentAiProvider, currentLanguage);
+    let enableThinking = false;
+    if (aiProviderSelectPanel.value === 'gemini' || (aiProviderSelectPanel.value === 'default' && currentAiProvider === 'gemini')) {
+         if (geminiThinkingModeArea.style.display === 'block') { // only consider if visible
+            enableThinking = geminiThinkingModeCheckbox.checked;
+        }
+    }
+    const answer = await callAIService('chat', { question: question, context: content }, currentAiProvider, currentLanguage, enableThinking);
     addMessageToPanel(answer, 'ai-message');
 } catch (error) {
     console.error("Chat error:", error);

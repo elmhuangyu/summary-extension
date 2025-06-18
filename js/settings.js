@@ -5,11 +5,12 @@ const openaiApiKeyInput = document.getElementById('openaiApiKey');
 const geminiApiKeyInput = document.getElementById('geminiApiKey');
 const defaultAiSelect = document.getElementById('defaultAi');
 const languageSelect = document.getElementById('language');
+const geminiModelSelect = document.getElementById('geminiModel'); // Added
 const statusMessage = document.getElementById('statusMessage');
 
 // Load saved settings when the page opens
 document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language'], (result) => {
+    chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel'], (result) => { // Added 'geminiModel'
         if (result.openaiApiKey) {
             openaiApiKeyInput.value = result.openaiApiKey;
         }
@@ -22,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.language) {
             languageSelect.value = result.language;
         }
+        if (result.geminiModel) { // Added
+            geminiModelSelect.value = result.geminiModel; // Added
+        }
         console.log('Settings loaded:', result);
     });
 });
@@ -33,7 +37,8 @@ settingsForm.addEventListener('submit', (event) => {
         openaiApiKey: openaiApiKeyInput.value.trim(),
         geminiApiKey: geminiApiKeyInput.value.trim(),
         defaultAi: defaultAiSelect.value,
-        language: languageSelect.value
+        language: languageSelect.value,
+        geminiModel: geminiModelSelect.value // Added
     };
 
     chrome.storage.local.set(settings, () => {

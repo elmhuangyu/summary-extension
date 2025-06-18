@@ -14,7 +14,7 @@ let pageMarkdown = null; // To cache page content
 // --- Utility functions to add messages to the response area ---
 function addMessageToPanel(text, type) {
     const messageDiv = document.createElement('div');
-    messageDiv.classList.add(type === 'user' ? 'user-message' : (type === 'error' ? 'error-message' : 'ai-message'));
+    messageDiv.classList.add(type);
     // Simple text display. For Markdown from AI, this would need a Markdown parser.
     // For now, replacing newlines with <br> for basic formatting.
     messageDiv.innerHTML = text.replace(/\n/g, '<br>');

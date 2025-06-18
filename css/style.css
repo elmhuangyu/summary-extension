@@ -102,19 +102,18 @@ h1, h2 {
 
 #responseArea .user-message {
     background-color: #e1f5fe; /* Light blue for user messages */
-    text-align: right;
-    margin-left: 20%;
+    margin-left: 10%;
 }
 
 #responseArea .ai-message {
     background-color: #f0f0f0; /* Light grey for AI messages */
-    margin-right: 20%;
+    margin-right: 10%;
 }
 
 #responseArea .error-message {
     background-color: #ffebee; /* Light red for errors */
     color: #c62828;
-    margin-right: 20%;
+    margin-right: 10%;
 }
 
 #loadingIndicator {

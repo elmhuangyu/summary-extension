@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "AI Page Assistant",
+  "version": "0.1.0",
+  "description": "Use AI to summarize and chat about the current web page.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "sidePanel",
+    "scripting",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/",
+    "https://generativelanguage.googleapis.com/"
+  ],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/lib/turndown.js", "js/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    // "default_popup": "html/popup.html", // Not using a popup, side panel opens on action click
+    "default_title": "AI Page Assistant"
+    // Icon clicks are handled by background script to open side panel.
+  },
+  "side_panel": {
+    "default_path": "html/sidepanel.html"
+  },
+  "options_page": "html/settings.html",
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}

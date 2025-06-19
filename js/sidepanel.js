@@ -184,7 +184,7 @@ function updateGeminiThinkingModeVisibility() {
             const actualDefaultProvider = settings.defaultAi || 'openai'; // Fallback to openai if no defaultAi is set
             currentGeminiModel = settings.geminiModel || "gemini-2.0-flash"; // Ensure currentGeminiModel is fresh
 
-            if (actualDefaultProvider === 'gemini' && currentGeminiModel === "gemini-2.5-flash-lite-preview-06-17") {
+            if (actualDefaultProvider === 'gemini' && currentGeminiModel && currentGeminiModel.startsWith("gemini-2.5")) {
                 geminiThinkingModeArea.style.display = 'block';
             } else {
                 geminiThinkingModeArea.style.display = 'none';
@@ -196,7 +196,7 @@ function updateGeminiThinkingModeVisibility() {
         // If 'Gemini (Official)' is directly selected, use currentGeminiModel (already loaded from storage)
         chrome.storage.local.get(['geminiModel'], (settings) => { // Ensure model is fresh
             currentGeminiModel = settings.geminiModel || "gemini-2.0-flash";
-            if (currentGeminiModel === "gemini-2.5-flash-lite-preview-06-17") {
+            if (currentGeminiModel && currentGeminiModel.startsWith("gemini-2.5")) {
                 geminiThinkingModeArea.style.display = 'block';
             } else {
                 geminiThinkingModeArea.style.display = 'none';

@@ -66,8 +66,8 @@ async function callGemini(apiKey, contents, language, geminiModel, enableThinkin
         }
     };
 
-    // Add thinkingConfig if enableThinking is true and model is gemini-2.5-flash-lite-preview-06-17
-    if (enableThinking && modelName === "gemini-2.5-flash-lite-preview-06-17") {
+    // Add thinkingConfig if enableThinking is true and modelName starts with "gemini-2.5"
+    if (enableThinking && modelName && modelName.startsWith("gemini-2.5")) {
         requestBody.generationConfig.thinkingConfig = { "thinkingBudget": -1 };
     }
 

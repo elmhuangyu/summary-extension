@@ -1,4 +1,4 @@
-console.log("Settings script loaded.");
+debugLog("Settings script loaded.");
 
 const settingsForm = document.getElementById('settingsForm');
 const openaiApiKeyInput = document.getElementById('openaiApiKey');
@@ -7,6 +7,7 @@ const defaultAiSelect = document.getElementById('defaultAi');
 const languageSelect = document.getElementById('language');
 const geminiModelSelect = document.getElementById('geminiModel');
 const statusMessage = document.getElementById('statusMessage');
+const debugModeCheckbox = document.getElementById('debugMode');
 
 // OpenAI-Compatible Providers Elements
 const providerNameInput = document.getElementById('providerName');
@@ -22,16 +23,17 @@ let currentProviders = []; // Local cache for providers
 // Load saved settings when the page opens
 document.addEventListener('DOMContentLoaded', () => {
     // Load standard settings
-    chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel', openaiCompatibleProvidersKey], (result) => {
+    chrome.storage.local.get(['openaiApiKey', 'geminiApiKey', 'defaultAi', 'language', 'geminiModel', 'debugMode', openaiCompatibleProvidersKey], (result) => {
         if (result.openaiApiKey) openaiApiKeyInput.value = result.openaiApiKey;
         if (result.geminiApiKey) geminiApiKeyInput.value = result.geminiApiKey;
         if (result.defaultAi) defaultAiSelect.value = result.defaultAi;
         if (result.language) languageSelect.value = result.language;
         if (result.geminiModel) geminiModelSelect.value = result.geminiModel;
+        if (result.debugMode) debugModeCheckbox.checked = result.debugMode;
 
         currentProviders = result[openaiCompatibleProvidersKey] || [];
         renderProviders();
-        console.log('Settings loaded:', result);
+        debugLog('Settings loaded:', result);
     });
 
     // Add provider button listener
@@ -130,7 +132,7 @@ async function handleDeleteProvider(providerId) {
 async function saveProviders() {
     return new Promise(resolve => {
         chrome.storage.local.set({ [openaiCompatibleProvidersKey]: currentProviders }, () => {
-            console.log('Providers saved:', currentProviders);
+            debugLog('Providers saved:', currentProviders);
             resolve();
         });
     });
@@ -148,11 +150,12 @@ settingsForm.addEventListener('submit', (event) => {
             geminiApiKey: geminiApiKeyInput.value.trim(),
             defaultAi: defaultAiSelect.value,
             language: languageSelect.value,
-            geminiModel: geminiModelSelect.value
+            geminiModel: geminiModelSelect.value,
+            debugMode: debugModeCheckbox.checked
         };
 
         chrome.storage.local.set(updatedSettings, () => {
-            console.log('Settings saved:', updatedSettings);
+            debugLog('Settings saved:', updatedSettings);
             statusMessage.textContent = 'Settings saved successfully!';
             setTimeout(() => {
                 statusMessage.textContent = '';

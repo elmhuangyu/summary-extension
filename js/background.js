@@ -1,4 +1,6 @@
-console.log("Background script loaded.");
+importScripts('lib/utils.js');
+
+debugLog("Background script loaded.");
 
 // Open the side panel when the extension icon is clicked
 chrome.sidePanel
@@ -11,7 +13,7 @@ chrome.runtime.onInstalled.addListener(details => {
     // This will open the settings page in a new tab.
     // Ensure 'options_page' is defined in manifest.json for this to work seamlessly.
     chrome.runtime.openOptionsPage();
-    console.log("Extension installed, opening options page.");
+    debugLog("Extension installed, opening options page.");
   }
   // You could also add logic for 'UPDATE' if needed, e.g., to show release notes.
 });
@@ -27,4 +29,4 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Add other global message handlers here if necessary
 });
 
-console.log("Background script setup complete: side panel on click, options on install.");
+debugLog("Background script setup complete: side panel on click, options on install.");

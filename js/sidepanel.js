@@ -1,4 +1,4 @@
-console.log("Sidepanel script loaded.");
+debugLog("Sidepanel script loaded.");
 
 const aiProviderSelectPanel = document.getElementById('aiProviderPanel');
 const responseArea = document.getElementById('responseArea');
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentAiProvider = aiProviderSelectPanel.value;
 
 
-        console.log('Sidepanel loaded settings:', {
+        debugLog('Sidepanel loaded settings:', {
             defaultAi: settings.defaultAi,
             language: settings.language,
             geminiModel: settings.geminiModel,
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set AI provider based on panel dropdown
     aiProviderSelectPanel.addEventListener('change', (event) => {
         currentAiProvider = event.target.value; // This is correct, can be 'default', 'openai', 'gemini', or a custom name
-        console.log("AI Provider changed in panel to:", currentAiProvider);
+        debugLog("AI Provider changed in panel to:", currentAiProvider);
         // The message should reflect the actual provider if 'default' is chosen.
         // This requires re-evaluating the default provider. For simplicity, keep as is or enhance later.
         addMessageToPanel(`Switched to ${event.target.options[event.target.selectedIndex].text}.`, 'ai-message');
@@ -105,16 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
             let needsUIRefresh = false;
             if (changes.geminiModel) {
                 currentGeminiModel = changes.geminiModel.newValue || "gemini-2.0-flash";
-                console.log("Gemini model changed via storage: ", currentGeminiModel);
+                debugLog("Gemini model changed via storage: ", currentGeminiModel);
                 needsUIRefresh = true;
             }
             if (changes.defaultAi) {
-                console.log("Default AI provider changed via storage: ", changes.defaultAi.newValue);
+                debugLog("Default AI provider changed via storage: ", changes.defaultAi.newValue);
                 // No direct change to currentAiProvider here, populateAiProviderDropdown will handle selection
                 needsUIRefresh = true;
             }
             if (changes.openaiCompatibleProviders) {
-                console.log("Custom providers changed via storage.");
+                debugLog("Custom providers changed via storage.");
                 needsUIRefresh = true;
             }
 
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     populateAiProviderDropdown(customProviders, newSettings.defaultAi);
                     currentAiProvider = aiProviderSelectPanel.value; // Reflect dropdown's actual state
                     updateGeminiThinkingModeVisibility();
-                    console.log("Sidepanel UI updated due to storage change.");
+                    debugLog("Sidepanel UI updated due to storage change.");
                 });
             }
         }
@@ -190,7 +190,7 @@ function updateGeminiThinkingModeVisibility() {
                 geminiThinkingModeArea.style.display = 'none';
                 geminiThinkingModeCheckbox.checked = false;
             }
-            console.log(`Gemini Thinking Mode (default flow): actualDefault=${actualDefaultProvider}, model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
+            debugLog(`Gemini Thinking Mode (default flow): actualDefault=${actualDefaultProvider}, model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
         });
     } else if (providerToCheck === 'gemini') {
         // If 'Gemini (Official)' is directly selected, use currentGeminiModel (already loaded from storage)
@@ -202,13 +202,13 @@ function updateGeminiThinkingModeVisibility() {
                 geminiThinkingModeArea.style.display = 'none';
                 geminiThinkingModeCheckbox.checked = false;
             }
-            console.log(`Gemini Thinking Mode (direct gemini): model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
+            debugLog(`Gemini Thinking Mode (direct gemini): model=${currentGeminiModel}, visible=${geminiThinkingModeArea.style.display === 'block'}`);
         });
     } else {
         // OpenAI or Custom provider selected
         geminiThinkingModeArea.style.display = 'none';
         geminiThinkingModeCheckbox.checked = false;
-        console.log(`Gemini Thinking Mode (openai/custom): provider=${providerToCheck}, visible=false`);
+        debugLog(`Gemini Thinking Mode (openai/custom): provider=${providerToCheck}, visible=false`);
     }
 }
 
@@ -240,7 +240,7 @@ async function getPageContentFromContentScript() {
         const response = await chrome.tabs.sendMessage(activeTab.id, { action: "getPageContent" });
         if (response && response.content) {
             pageMarkdown = response.content;
-            console.log("Received markdown from content script (length):", pageMarkdown.length);
+            debugLog("Received markdown from content script (length):", pageMarkdown.length);
             if (pageMarkdown.startsWith("Error:")) {
                  addMessageToPanel(`Could not fetch page content: ${pageMarkdown}`, 'error-message');
                  return null;
@@ -263,8 +263,7 @@ summarizeBtn.addEventListener('click', async () => {
     addMessageToPanel("Summarizing page...", 'user-message');
     const content = pageMarkdown || await getPageContentFromContentScript();
     if (content) {
-        // Placeholder for AI call
-        console.log("Summarize button clicked. Content acquired. Ready for AI call.");
+        debugLog("Summarize button clicked. Content acquired. Ready for AI call.");
         loadingIndicator.style.display = 'block';
 try {
     let enableThinking = false;
@@ -296,7 +295,7 @@ sendChatBtn.addEventListener('click', async () => {
     const content = pageMarkdown || await getPageContentFromContentScript();
 
     if (content || question.toLowerCase().includes("hello") || question.toLowerCase().includes("hi")) { // Allow greeting without content
-        console.log("Chat message sent. Content acquired (if any). Ready for AI call.");
+        debugLog("Chat message sent. Content acquired (if any). Ready for AI call.");
         loadingIndicator.style.display = 'block';
 try {
     let enableThinking = false;
@@ -324,8 +323,4 @@ chatInput.addEventListener('keypress', (event) => {
     }
 });
 
-console.log("Sidepanel event listeners and functions set up.");
-
-// Ensure ai_service.js is loaded before sidepanel.js in html/sidepanel.html
-// e.g. <script src="../js/ai_service.js"></script> <script src="../js/sidepanel.js"></script>
-// For now, we assume callAIService is globally available from ai_service.js
+debugLog("Sidepanel event listeners and functions set up.");

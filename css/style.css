@@ -169,3 +169,7 @@ h1, h2 {
 #sendChatBtn:hover {
     background-color: #0056b3;
 }
+
+.settings-page {
+    padding-left: 20px;
+}

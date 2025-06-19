@@ -1,10 +1,6 @@
-// Placeholder for TurndownService.
-// In a real extension, you'd ensure Turndown is loaded, e.g.,
-// by including turndown.js in manifest.json's content_scripts or by importing it if using modules.
-// For this subtask, we'll assume TurndownService is globally available or will be injected.
 // const turndownService = new TurndownService();
 
-console.log("Content script trying to load.");
+debugLog("Content script trying to load.");
 
 // Function to extract and clean page content
 function getPageMarkdown() {
@@ -21,7 +17,7 @@ function getPageMarkdown() {
             documentClone.querySelector('[role="main"]') ||
             documentClone; // Fallback to body if no specific main content tag is found
 
-        console.log("Main content element:", mainContentElement);
+        debugLog("Main content element:", mainContentElement);
         let pageHtml = mainContentElement.innerHTML;
 
         // Basic pre-cleaning: remove excessive newlines and whitespace before Turndown
@@ -80,13 +76,13 @@ function getPageMarkdown() {
 
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log("Message received in content script:", request);
+    debugLog("Message received in content script:", request);
     if (request.action === "getPageContent") {
         const markdown = getPageMarkdown();
-        console.log("Sending markdown to side panel (approx length):", markdown.length);
+        debugLog("Sending markdown to side panel (approx length):", markdown.length);
         sendResponse({ content: markdown });
     }
     return true; // Indicates that the response will be sent asynchronously
 });
 
-console.log("Content script loaded and listener added.");
+debugLog("Content script loaded and listener added.");

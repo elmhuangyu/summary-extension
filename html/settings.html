@@ -4,7 +4,7 @@
     <title>Extension Settings</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body>
+<body class="settings-page">
     <h1>Extension Settings</h1>
 
     <form id="settingsForm">
@@ -43,8 +43,11 @@
                 <option value="de">German</option>
                 <option value="ja">Japanese</option>
                 <option value="zh">Chinese</option>
-                {/* Add more common languages as needed */}
             </select>
+        </div>
+        <div>
+            <label for="debugMode">Debug Mode:</label>
+            <input type="checkbox" id="debugMode" name="debugMode">
         </div>
 
         <h2>OpenAI-Compatible Providers</h2>
@@ -76,6 +79,7 @@
     </form>
     <p id="statusMessage"></p>
 
+    <script src="../js/lib/utils.js"></script>
     <script src="../js/settings.js"></script>
 </body>
 </html>

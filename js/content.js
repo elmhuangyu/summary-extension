@@ -1,7 +1,3 @@
-// const turndownService = new TurndownService();
-
-debugLog("Content script trying to load.");
-
 // Function to extract and clean page content
 function getPageMarkdown() {
     try {
@@ -55,6 +51,7 @@ function getPageMarkdown() {
 
 
         let markdown = turndownService.turndown(pageHtml);
+        debugLog("Markdown content:", markdown);
 
         // Post-processing: Trim whitespace, reduce multiple blank lines
         markdown = markdown.trim().replace(/\n{3,}/g, '\n\n');
@@ -84,5 +81,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     return true; // Indicates that the response will be sent asynchronously
 });
-
-debugLog("Content script loaded and listener added.");

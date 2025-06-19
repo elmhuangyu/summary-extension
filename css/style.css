@@ -53,24 +53,10 @@ h1, h2 {
 /* Side Panel Specific Styles */
 .sidepanel-container {
     display: grid;
-    grid-template-rows: auto 1fr auto; /* Header, main content (responseArea), footer */
-    height: 100%; /* MODIFIED - was 100vh */
-    padding: 10px;
+    grid-template-rows: 1fr auto; 
+    height: 100%;
+    padding: 10px 2px 10px 2px;
     box-sizing: border-box;
-}
-
-.sidepanel-container header {
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.sidepanel-container header h1 {
-    margin: 0;
-    font-size: 1.2em;
 }
 
 .ai-selector-panel label {
@@ -85,7 +71,7 @@ h1, h2 {
 
 #responseArea {
     overflow-y: auto; /* Scrollable - ensure this remains */
-    padding: 10px;
+    padding: 5px;
     background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -94,7 +80,7 @@ h1, h2 {
 }
 
 #responseArea .user-message, #responseArea .ai-message, #responseArea .error-message, .welcome-message {
-    padding: 8px;
+    padding: 5px;
     border-radius: 4px;
     margin-bottom: 8px;
     word-wrap: break-word;
@@ -122,8 +108,11 @@ h1, h2 {
 }
 
 .sidepanel-container footer {
-    padding-top: 10px;
+    /* padding: 5px 0 0 10px; */
     border-top: 1px solid #ccc;
+    width: 100%; /* Ensure it spans the full width */
+    background-color: #f4f4f4; /* Add background to cover content */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
 
 #summarizeBtn {

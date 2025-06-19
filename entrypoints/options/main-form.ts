@@ -2,6 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import { storage } from '#imports';
+import { GoogleGenAI } from '@google/genai';
+import { OpenAI } from 'openai';
 
 interface AppSettings {
     openaiApiKey: string;
@@ -16,6 +18,12 @@ interface AppSettings {
 export class SettingsForm extends LitElement {
     @query('#settingsForm')
     private settingsForm!: HTMLFormElement;
+
+    @query('#openaiApiKey')
+    openaiApiKey!: HTMLInputElement;
+
+    @query('#geminiApiKey')
+    geminiApiKey!: HTMLInputElement;
 
     @property({ type: Object })
     settings: AppSettings = {
@@ -48,8 +56,18 @@ export class SettingsForm extends LitElement {
         h2:first-of-type {
             margin-top: 0;
         }
+        h3 {
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
         div {
             margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        div.oneline {
+            margin: 0;
             display: flex;
             flex-direction: row;
         }
@@ -74,6 +92,7 @@ export class SettingsForm extends LitElement {
         button {
             background-color: #007bff;
             color: white;
+            margin-left: 0 2px;
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -119,11 +138,44 @@ export class SettingsForm extends LitElement {
         this.saveSettings();
     }
 
+    private async testOpenAiConnection(event: Event) {
+        const apiKey = this.openaiApiKey.value;
+        if (!apiKey) {
+            return;
+        }
+
+        const ai = new OpenAI({
+            apiKey: apiKey,
+            dangerouslyAllowBrowser: true,
+        });
+        try {
+            await ai.models.list();
+            alert('OpenAI Connected');
+        } catch {
+            alert('OpenAI does not connected');
+        }
+    }
+
+    private async testGeminiConnection() {
+        const apiKey = this.geminiApiKey.value;
+        if (!apiKey) {
+            return;
+        }
+
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        try {
+            await ai.models.list();
+            alert('Gemini Connected');
+        } catch (e) {
+            alert('Gemini does not connected');
+        }
+    }
+
     render() {
         return html`
             <form id="settingsForm" @submit=${this.handleSubmit}>
                 <h2>Preferences</h2>
-                <div class="checkbox-container">
+                <div class="checkbox-container oneline">
                     <input
                         type="checkbox"
                         id="debugMode"
@@ -132,7 +184,7 @@ export class SettingsForm extends LitElement {
                     >
                     <label for="debugMode">Debug Mode: will enable console.log()</label>
                 </div>
-                <div>
+                <div class="oneline">
                     <label for="language">Response Language:</label>
                     <select
                         id="language"
@@ -149,23 +201,31 @@ export class SettingsForm extends LitElement {
                 </div>
 
                 <h2>AI Provider</h2>
+                <h3>OpenAI</h3>
                 <div>
                     <label for="openaiApiKey">OpenAI API Key:</label>
-                    <input
-                        type="password"
-                        id="openaiApiKey"
-                        name="openaiApiKey"
-                        .value=${this.settings.openaiApiKey}
-                    >
+                    <div class="oneline">
+                        <input
+                            type="password"
+                            id="openaiApiKey"
+                            name="openaiApiKey"
+                            .value=${this.settings.openaiApiKey}
+                        >
+                        <button type="button" @click=${this.testOpenAiConnection}>Test</button>
+                    </div>
                 </div>
+                <h3>Gemini</h3>
                 <div>
                     <label for="geminiApiKey">Gemini API Key:</label>
-                    <input
-                        type="password"
-                        id="geminiApiKey"
-                        name="geminiApiKey"
-                        .value=${this.settings.geminiApiKey}
-                    >
+                    <div class="oneline">
+                        <input
+                            type="password"
+                            id="geminiApiKey"
+                            name="geminiApiKey"
+                            .value=${this.settings.geminiApiKey}
+                        >
+                        <button type="button" @click=${this.testGeminiConnection}>Test</button>
+                    </div>
                 </div>
                 <div>
                     <label for="geminiModel">Default Gemini Model:</label>
@@ -281,7 +341,7 @@ export class OpenAiProvidersForm extends LitElement {
             border-radius: 5px;
             cursor: pointer;
             font-size: 1rem;
-            margin-top: 10px;
+            margin-right: 5px;
         }
         button:hover {
             background-color: #0056b3;
@@ -326,6 +386,11 @@ export class OpenAiProvidersForm extends LitElement {
         .provider-item button.delete-btn:hover {
             background-color: #c82333;
         }
+        div.oneline {
+            margin: 0;
+            display: flex;
+            flex-direction: row;
+        }
     `;
 
     connectedCallback() {
@@ -341,7 +406,7 @@ export class OpenAiProvidersForm extends LitElement {
     }
 
     private async saveProviders() {
-        await storage.setItem("local:openAiProviders", this.providers );
+        await storage.setItem("local:openAiProviders", this.providers);
     }
 
     private addProvider() {
@@ -384,6 +449,27 @@ export class OpenAiProvidersForm extends LitElement {
         if (confirm(`Are you sure you want to delete the provider "${nameToDelete}"?`)) {
             this.providers = this.providers.filter(provider => provider.name !== nameToDelete);
             this.saveProviders();
+        }
+    }
+
+    private async checkConnection() {
+        if (this.providerBaseUrlInput.value === '' || this.providerAccessTokenInput.value === '') {
+            return;
+        }
+
+        const baseUrl = this.providerBaseUrlInput.value;
+        const apiKey = this.providerAccessTokenInput.value;
+
+        const ai = new OpenAI({
+            baseURL: baseUrl,
+            apiKey: apiKey,
+            dangerouslyAllowBrowser: true,
+        });
+        try {
+            await ai.models.list();
+            alert('LLM Connected');
+        } catch {
+            alert('LLM does not connected');
         }
     }
 
@@ -453,7 +539,10 @@ export class OpenAiProvidersForm extends LitElement {
                             .value=${live(this.providerAccessTokenInput?.value || '')}
                         >
                     </div>
-                    <button type="button" id="addProviderBtn" @click=${this.addProvider}>Add Provider</button>
+                    <div class="oneline">
+                        <button type="button" id="checkConnectionBtn" @click=${this.checkConnection}>Test</button>
+                        <button type="button" id="addProviderBtn" @click=${this.addProvider}>Add Provider</button>
+                    </div>
                 </fieldset>
             </form>
         `;

@@ -1,3 +1,6 @@
+import { debugLog } from './lib/utils.js';
+import TurndownService from 'turndown';
+
 // Function to extract and clean page content
 function getPageMarkdown() {
     try {
@@ -19,12 +22,7 @@ function getPageMarkdown() {
         // Basic pre-cleaning: remove excessive newlines and whitespace before Turndown
         pageHtml = pageHtml.replace(/\s{2,}/g, ' ').trim();
 
-        // Initialize Turndown service (assuming it's loaded)
-        // Check if TurndownService is available
-        if (typeof TurndownService === 'undefined') {
-            console.error('TurndownService is not loaded.');
-            return "Error: Turndown library not available.";
-        }
+        // Initialize Turndown service
         const turndownService = new TurndownService({
             headingStyle: 'atx', // # Heading
             hr: '---',

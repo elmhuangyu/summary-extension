@@ -1,3 +1,5 @@
+import { debugLog } from './lib/utils.js';
+
 debugLog("Settings script loaded.");
 
 const settingsForm = document.getElementById('settingsForm');

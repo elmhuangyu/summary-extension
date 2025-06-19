@@ -1,4 +1,4 @@
-debugLog("Sidepanel script loaded.");
+import { debugLog } from './lib/utils.js';
 
 const aiProviderSelectPanel = document.getElementById('aiProviderPanel');
 const responseArea = document.getElementById('responseArea');

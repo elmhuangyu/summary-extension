@@ -1,4 +1,4 @@
-importScripts('lib/utils.js');
+import { debugLog } from './lib/utils.js';
 
 debugLog("Background script loaded.");
 

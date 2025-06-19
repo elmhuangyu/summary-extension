@@ -1,6 +1,3 @@
-// js/ai_service.js
-console.log("ai_service.js loaded");
-
 async function getStoredSettings() {
     // Added openaiCompatibleProviders to the list of keys to fetch
     return new Promise((resolve) => {

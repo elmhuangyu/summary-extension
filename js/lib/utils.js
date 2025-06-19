@@ -3,7 +3,7 @@
  * Retrieves the 'debugMode' setting from chrome.storage.local.
  * @param {...any} args - The messages or objects to log.
  */
-async function debugLog(...args) {
+export async function debugLog(...args) {
   try {
     const data = await chrome.storage.local.get('debugMode');
     if (data.debugMode) {

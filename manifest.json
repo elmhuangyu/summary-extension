@@ -25,9 +25,7 @@
     }
   ],
   "action": {
-    // "default_popup": "html/popup.html", // Not using a popup, side panel opens on action click
     "default_title": "AI Page Assistant"
-    // Icon clicks are handled by background script to open side panel.
   },
   "side_panel": {
     "default_path": "html/sidepanel.html"

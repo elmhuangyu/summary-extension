@@ -15,7 +15,16 @@
     "postinstall": "wxt prepare"
   },
   "devDependencies": {
+    "@types/node": "^24.0.3",
+    "@types/webextension-polyfill": "^0.10.0",
     "typescript": "^5.8.3",
     "wxt": "^0.20.6"
+  },
+  "dependencies": {
+    "@google/genai": "^1.5.1",
+    "@wxt-dev/webextension-polyfill": "^1.0.0",
+    "lit": "^3.3.0",
+    "mime": "^4.0.7",
+    "turndown": "^7.2.0"
   }
 }

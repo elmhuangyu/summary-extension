@@ -1,0 +1,461 @@
+import { LitElement, html, css } from 'lit';
+import { customElement, property, query, state } from 'lit/decorators.js';
+import { live } from 'lit/directives/live.js';
+import { storage } from '#imports';
+
+interface AppSettings {
+    openaiApiKey: string;
+    geminiApiKey: string;
+    geminiModel: string;
+    defaultAi: string;
+    language: string;
+    debugMode: boolean;
+}
+
+@customElement('settings-form')
+export class SettingsForm extends LitElement {
+    @query('#settingsForm')
+    private settingsForm!: HTMLFormElement;
+
+    @property({ type: Object })
+    settings: AppSettings = {
+        openaiApiKey: '',
+        geminiApiKey: '',
+        geminiModel: 'gemini-2.5-flash-lite-preview-06-17',
+        defaultAi: 'gemini',
+        language: 'en',
+        debugMode: false,
+    };
+
+    static styles = css`
+        :host {
+            display: block;
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+        h2:first-of-type {
+            margin-top: 0;
+        }
+        div {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: row;
+        }
+        label {
+            margin: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="password"],
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+        .checkbox-container input[type="checkbox"] {
+            display: inline;
+            width: fit-content;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    `;
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.loadSettings();
+    }
+
+    private async loadSettings() {
+        const settings = await storage.getItem<AppSettings>('local:settings');
+        if (settings) {
+            this.settings = settings;
+        }
+    }
+
+    private saveSettings() {
+        storage.setItem('local:settings', this.settings);
+    }
+
+    private handleSubmit(event: Event) {
+        event.preventDefault();
+        const formData = new FormData(this.settingsForm);
+        const newSettings: Partial<AppSettings> = {};
+
+        formData.forEach((value, key) => {
+            const settingKey = key as keyof AppSettings;
+            if (settingKey === 'debugMode') {
+                newSettings.debugMode = (value === 'on'); // Checkboxes submit 'on' if checked, otherwise not present
+            } else {
+                newSettings[settingKey] = value as string;
+            }
+        });
+
+        this.settings = { ...this.settings, ...newSettings as AppSettings };
+        this.saveSettings();
+    }
+
+    render() {
+        return html`
+            <form id="settingsForm" @submit=${this.handleSubmit}>
+                <h2>Preferences</h2>
+                <div class="checkbox-container">
+                    <input
+                        type="checkbox"
+                        id="debugMode"
+                        name="debugMode"
+                        .checked=${this.settings.debugMode}
+                    >
+                    <label for="debugMode">Debug Mode: will enable console.log()</label>
+                </div>
+                <div>
+                    <label for="language">Response Language:</label>
+                    <select
+                        id="language"
+                        name="language"
+                        .value=${this.settings.language}
+                    >
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="ja">Japanese</option>
+                        <option value="zh">Chinese</option>
+                    </select>
+                </div>
+
+                <h2>AI Provider</h2>
+                <div>
+                    <label for="openaiApiKey">OpenAI API Key:</label>
+                    <input
+                        type="password"
+                        id="openaiApiKey"
+                        name="openaiApiKey"
+                        .value=${this.settings.openaiApiKey}
+                    >
+                </div>
+                <div>
+                    <label for="geminiApiKey">Gemini API Key:</label>
+                    <input
+                        type="password"
+                        id="geminiApiKey"
+                        name="geminiApiKey"
+                        .value=${this.settings.geminiApiKey}
+                    >
+                </div>
+                <div>
+                    <label for="geminiModel">Default Gemini Model:</label>
+                    <select
+                        id="geminiModel"
+                        name="geminiModel"
+                        .value=${this.settings.geminiModel}
+                    >
+                        <option value="gemini-2.5-flash-lite-preview-06-17">gemini-2.5-flash-lite-preview-06-17</option>
+                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="defaultAi">Default AI Model:</label>
+                    <select
+                        id="defaultAi"
+                        name="defaultAi"
+                        .value=${this.settings.defaultAi}
+                    >
+                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                </div>
+
+                <button type="submit">Save Settings</button>
+            </form>
+        `;
+    }
+}
+
+interface OpenAiProvider {
+    name: string;
+    baseUrl: string;
+    model: string;
+    accessToken: string;
+}
+
+@customElement('openai-providers-form')
+export class OpenAiProvidersForm extends LitElement {
+    @state()
+    providers: OpenAiProvider[] = [];
+
+    @query('#providerName')
+    private providerNameInput!: HTMLInputElement;
+
+    @query('#providerBaseUrl')
+    private providerBaseUrlInput!: HTMLInputElement;
+
+    @query('#providerModel')
+    private providerModelInput!: HTMLInputElement;
+
+    @query('#providerAccessToken')
+    private providerAccessTokenInput!: HTMLInputElement;
+
+    static styles = css`
+        :host {
+            display: block;
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        legend {
+            font-weight: bold;
+            color: #007bff;
+            padding: 0 10px;
+        }
+        div {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="url"],
+        input[type="password"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #openaiCompatibleProvidersList {
+            margin-top: 20px;
+        }
+        .provider-item {
+            background-color: #e9f7ff;
+            border: 1px solid #cceeff;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .provider-details {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+        .provider-details strong {
+            color: #0056b3;
+        }
+        .provider-details p {
+            margin: 3px 0;
+            font-size: 0.9em;
+            color: #666;
+            word-break: break-all; /* Helps with long URLs */
+        }
+        .provider-item button.delete-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 15px;
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+        .provider-item button.delete-btn:hover {
+            background-color: #c82333;
+        }
+    `;
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.loadProviders();
+    }
+
+    private async loadProviders() {
+        const data = await storage.getItem<OpenAiProvider[]>('local:openAiProviders');
+        if (data) {
+            this.providers = data;
+        }
+    }
+
+    private async saveProviders() {
+        await storage.setItem("local:openAiProviders", this.providers );
+    }
+
+    private addProvider() {
+        const newProviderName = this.providerNameInput.value.trim();
+
+        // Basic validation
+        if (!newProviderName || !this.providerBaseUrlInput.value.trim() || !this.providerModelInput.value.trim() || !this.providerAccessTokenInput.value.trim()) {
+            alert('Please fill in all fields for the new provider.');
+            return;
+        }
+        if (!this.providerBaseUrlInput.value.trim().startsWith('http://') && !this.providerBaseUrlInput.value.trim().startsWith('https://')) {
+            alert('Base URL must start with http:// or https://');
+            return;
+        }
+
+        // Validate uniqueness of the name
+        if (this.providers.some(p => p.name.toLowerCase() === newProviderName.toLowerCase())) {
+            alert(`A provider with the name "${newProviderName}" already exists. Please choose a unique name.`);
+            return;
+        }
+
+        const newProvider: OpenAiProvider = {
+            name: newProviderName, // Name is now the identifier
+            baseUrl: this.providerBaseUrlInput.value.trim(),
+            model: this.providerModelInput.value.trim(),
+            accessToken: this.providerAccessTokenInput.value.trim(),
+        };
+
+        this.providers = [...this.providers, newProvider];
+        this.saveProviders();
+
+        // Clear the form fields
+        this.providerNameInput.value = '';
+        this.providerBaseUrlInput.value = '';
+        this.providerModelInput.value = '';
+        this.providerAccessTokenInput.value = '';
+    }
+
+    private deleteProvider(nameToDelete: string) { // Now accepts 'name' instead of 'id'
+        if (confirm(`Are you sure you want to delete the provider "${nameToDelete}"?`)) {
+            this.providers = this.providers.filter(provider => provider.name !== nameToDelete);
+            this.saveProviders();
+        }
+    }
+
+    render() {
+        return html`
+            <form id="openaiProvidersForm" @submit=${(e: Event) => e.preventDefault()}>
+                <h2>OpenAI-Compatible Providers</h2>
+                <div id="openaiCompatibleProvidersList">
+                    ${this.providers.length === 0
+                ? html`<p>No providers added yet.</p>`
+                : this.providers.map(provider => html`
+                            <div class="provider-item">
+                                <div class="provider-details">
+                                    <strong>${provider.name}</strong> <!-- Displaying name prominently -->
+                                    <p>URL: ${provider.baseUrl}</p>
+                                    <p>Model: ${provider.model}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="delete-btn"
+                                    @click=${() => this.deleteProvider(provider.name)}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        `)}
+                </div>
+
+                <fieldset>
+                    <legend>Add New OpenAI-Compatible Provider</legend>
+                    <div>
+                        <label for="providerName">Name:</label>
+                        <input
+                            type="text"
+                            id="providerName"
+                            name="providerName"
+                            .value=${live(this.providerNameInput?.value || '')}
+                            placeholder="e.g., My Custom OpenAI"
+                        >
+                    </div>
+                    <div>
+                        <label for="providerBaseUrl">Base URL:</label>
+                        <input
+                            type="url"
+                            id="providerBaseUrl"
+                            name="providerBaseUrl"
+                            .value=${live(this.providerBaseUrlInput?.value || '')}
+                            placeholder="e.g., https://api.example.com/v1"
+                        >
+                    </div>
+                    <div>
+                        <label for="providerModel">Model Name:</label>
+                        <input
+                            type="text"
+                            id="providerModel"
+                            name="providerModel"
+                            .value=${live(this.providerModelInput?.value || '')}
+                            placeholder="e.g., gpt-3.5-turbo"
+                        >
+                    </div>
+                    <div>
+                        <label for="providerAccessToken">Access Token:</label>
+                        <input
+                            type="password"
+                            id="providerAccessToken"
+                            name="providerAccessToken"
+                            .value=${live(this.providerAccessTokenInput?.value || '')}
+                        >
+                    </div>
+                    <button type="button" id="addProviderBtn" @click=${this.addProvider}>Add Provider</button>
+                </fieldset>
+            </form>
+        `;
+    }
+}

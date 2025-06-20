@@ -70,6 +70,7 @@ export class SettingsForm extends LitElement {
             margin: 0;
             display: flex;
             flex-direction: row;
+            gap: 5px;
         }
         label {
             margin: 5px;
@@ -88,19 +89,6 @@ export class SettingsForm extends LitElement {
         .checkbox-container input[type="checkbox"] {
             display: inline;
             width: fit-content;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            margin-left: 0 2px;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        button:hover {
-            background-color: #0056b3;
         }
     `;
 
@@ -121,7 +109,6 @@ export class SettingsForm extends LitElement {
     }
 
     private handleSubmit(event: Event) {
-        event.preventDefault();
         const formData = new FormData(this.settingsForm);
         const newSettings: Partial<AppSettings> = {};
 
@@ -173,7 +160,7 @@ export class SettingsForm extends LitElement {
 
     render() {
         return html`
-            <form id="settingsForm" @submit=${this.handleSubmit}>
+            <form id="settingsForm" @submit=${(e: Event) => e.preventDefault()}>
                 <h2>Preferences</h2>
                 <div class="checkbox-container oneline">
                     <input
@@ -211,7 +198,7 @@ export class SettingsForm extends LitElement {
                             name="openaiApiKey"
                             .value=${this.settings.openaiApiKey}
                         >
-                        <button type="button" @click=${this.testOpenAiConnection}>Test</button>
+                        <colored-button label="Test" @click=${this.testOpenAiConnection}></colored-button>
                     </div>
                 </div>
                 <h3>Gemini</h3>
@@ -224,7 +211,7 @@ export class SettingsForm extends LitElement {
                             name="geminiApiKey"
                             .value=${this.settings.geminiApiKey}
                         >
-                        <button type="button" @click=${this.testGeminiConnection}>Test</button>
+                        <colored-button label="Test" @click=${this.testGeminiConnection}></colored-button>
                     </div>
                 </div>
                 <div>
@@ -253,7 +240,7 @@ export class SettingsForm extends LitElement {
                     </select>
                 </div>
 
-                <button type="submit">Save Settings</button>
+                <colored-button label="Save Settings" @click=${this.handleSubmit}></colored-button>
             </form>
         `;
     }
@@ -333,20 +320,6 @@ export class OpenAiProvidersForm extends LitElement {
             width: 100%;
             box-sizing: border-box;
         }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            margin-right: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-
         #openaiCompatibleProvidersList {
             margin-top: 20px;
         }
@@ -383,13 +356,11 @@ export class OpenAiProvidersForm extends LitElement {
             margin-left: 15px;
             flex-shrink: 0; /* Prevent button from shrinking */
         }
-        .provider-item button.delete-btn:hover {
-            background-color: #c82333;
-        }
         div.oneline {
             margin: 0;
             display: flex;
             flex-direction: row;
+            gap: 5px;
         }
     `;
 
@@ -487,13 +458,12 @@ export class OpenAiProvidersForm extends LitElement {
                                     <p>URL: ${provider.baseUrl}</p>
                                     <p>Model: ${provider.model}</p>
                                 </div>
-                                <button
-                                    type="button"
-                                    class="delete-btn"
+                                <colored-button
+                                    label="Delete"
+                                    variant="danger"
                                     @click=${() => this.deleteProvider(provider.name)}
                                 >
-                                    Delete
-                                </button>
+                                </colored-button>
                             </div>
                         `)}
                 </div>
@@ -540,11 +510,84 @@ export class OpenAiProvidersForm extends LitElement {
                         >
                     </div>
                     <div class="oneline">
-                        <button type="button" id="checkConnectionBtn" @click=${this.checkConnection}>Test</button>
-                        <button type="button" id="addProviderBtn" @click=${this.addProvider}>Add Provider</button>
+                    <colored-button label="Add Provider" @click=${this.addProvider}></colored-button>
+                    <colored-button label="Test Connection" @click=${this.checkConnection}></colored-button>
                     </div>
                 </fieldset>
             </form>
+        `;
+    }
+}
+
+// Define a type for the button variants for better type safety
+type ButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'dark' | 'light';
+
+@customElement('colored-button')
+export class ColoredButton extends LitElement {
+    static styles = css`
+    button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        color: white; /* Default text color for dark backgrounds */
+        transition: background-color 0.2s ease, opacity 0.2s ease;
+        font-family: inherit; /* Inherit font from parent */
+        display: inline-flex; /* Use flex to align content and icon if any */
+        align-items: center;
+        justify-content: center;
+    }
+    button:hover {
+        opacity: 0.9;
+    }
+    button:active {
+        opacity: 0.8;
+    }
+
+    /* --- Variant Styles --- */
+    .primary { background-color: #007bff; } /* Blue */
+    .success { background-color: #28a745; } /* Green */
+    .danger { background-color: #dc3545; }  /* Red */
+    .warning { background-color: #ffc107; color: #333; } /* Yellow, often needs darker text */
+    .info { background-color: #17a2b8; }    /* Cyan/Teal */
+    .dark { background-color: #343a40; }    /* Dark Gray */
+    .light { background-color: #f8f9fa; color: #333; border: 1px solid #ddd; } /* Light, often needs darker text and border */
+    `;
+
+    /**
+     * Type of the button
+     * Defaults to 'button'.
+     */
+    @property({type: String})
+    btntype: string = 'button';
+
+    /**
+     * The text displayed on the button.
+     * Defaults to 'Button'.
+     */
+    @property({ type: String })
+    label: string = 'Button';
+
+    /**
+     * The color variant of the button.
+     * Choose from 'primary', 'success', 'danger', 'warning', 'info', 'dark', 'light'.
+     * Defaults to 'primary'.
+     */
+    @property({ type: String })
+    variant: ButtonVariant = 'primary';
+
+    /**
+     * Whether the button is disabled.
+     */
+    @property({ type: Boolean })
+    disabled: boolean = false;
+
+    render() {
+        return html`
+        <button type="${this.btntype}" class="${this.variant}">
+            <slot>${this.label}</slot>
+        </button>
         `;
     }
 }

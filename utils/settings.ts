@@ -1,4 +1,5 @@
 import { storage } from "#imports";
+import { Provider, Model } from "./llm";
 
 export const allowedOpenAiModels = [
     'gpt-4.1-nano',
@@ -63,6 +64,40 @@ export class AppSettings {
         if (this.geminiApiKey !== '' && this.enabledGeminiModels.length === 0) {
             this.enabledGeminiModels = [allowedGeminiModels[0]];
         }
+    }
+
+    public getEnabledModels(): string[] {
+        const models: string[] = [];
+
+        this.enabledOpenaiModels.forEach((model) => {
+            models.push('openai/'+model);
+        });
+
+        this.enabledGeminiModels.forEach((model) => {
+            models.push('gemini/'+model);
+        });
+
+        this.openaiCompatibleProviders.forEach((model) => {
+            models.push('custom/'+model.name);
+        });
+
+        return models;
+    }
+
+    public getModel(name: string): Model | null {
+        const parts = name.split('/');
+        if (parts[0] === 'openai') {
+            return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey);
+        }
+        if (parts[0] === 'gemini') {
+            return new Model(Provider.Gemini, '', parts[1], this.openaiApiKey);
+        }
+        for (const p of this.openaiCompatibleProviders) {
+            if (p.name == parts[1]) {
+                return new Model(Provider.OpenAICompatible, p.baseUrl, p.model, p.accessToken);
+            }
+        }
+        return null;
     }
 }
 

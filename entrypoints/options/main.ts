@@ -2,8 +2,6 @@ import { storage } from "#imports";
 import { LitElement, html, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
-import { GoogleGenAI } from '@google/genai';
-import { OpenAI } from 'openai';
 import {
     AppSettings,
     allowedOpenAiModels,
@@ -15,6 +13,7 @@ import {
     saveOpenAiCompatibleProviders,
     saveSettings,
 } from '../../utils/settings';
+import { Provider, Model } from '../../utils/llm';
 
 @customElement('settings-form')
 export class SettingsForm extends LitElement {
@@ -30,7 +29,7 @@ export class SettingsForm extends LitElement {
     @state()
     private settings: AppSettings = new AppSettings();
 
-    private unwatch: () => void = () => {};
+    private unwatch: () => void = () => { };
 
     static styles = css`
         :host {
@@ -79,7 +78,6 @@ export class SettingsForm extends LitElement {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 1rem;
             width: 100%;
             box-sizing: border-box; /* Include padding and border in the element's total width and height */
         }
@@ -135,43 +133,42 @@ export class SettingsForm extends LitElement {
 
     private async testOpenAiConnection(event: Event) {
         const button = event.target as ColoredButton;
+        button.variant = 'warning';
+        button.label = 'Testing...';
 
         const apiKey = this.openaiApiKey.value;
         if (!apiKey) {
             return;
         }
 
-        const ai = new OpenAI({
-            apiKey: apiKey,
-            dangerouslyAllowBrowser: true,
-        });
-        try {
-            await ai.models.list();
+        const ai = new Model(Provider.OpenAI, '', '', apiKey);
+        if (await ai.check()) {
             button.variant = 'success';
             button.label = 'Success';
-        } catch {
-            button.variant = 'danger';
-            button.label = 'Failed';
+            return;
         }
+        button.variant = 'danger';
+        button.label = 'Failed';
     }
 
     private async testGeminiConnection(event: Event) {
         const button = event.target as ColoredButton;
+        button.variant = 'warning';
+        button.label = 'Testing...';
 
         const apiKey = this.geminiApiKey.value;
         if (!apiKey) {
             return;
         }
 
-        const ai = new GoogleGenAI({ apiKey: apiKey });
-        try {
-            await ai.models.list();
+        const ai = new Model(Provider.Gemini, '', '', apiKey);
+        if (await ai.check()) {
             button.variant = 'success';
             button.label = 'Success';
-        } catch (e) {
-            button.variant = 'danger';
-            button.label = 'Failed';
+            return;
         }
+        button.variant = 'danger';
+        button.label = 'Failed';
     }
 
     render() {
@@ -344,7 +341,6 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 1rem;
             width: 100%;
             box-sizing: border-box;
         }
@@ -435,27 +431,27 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
 
     private async checkConnection(event: Event) {
         const button = event.target as ColoredButton;
+        button.variant = 'warning';
+        button.label = 'Testing...';
 
-        if (this.providerBaseUrlInput.value === '' || this.providerAccessTokenInput.value === '') {
+        if (this.providerBaseUrlInput.value === '' ||
+            this.providerModelInput.value === '' ||
+            this.providerAccessTokenInput.value === '') {
             return;
         }
 
         const baseUrl = this.providerBaseUrlInput.value;
+        const model = this.providerModelInput.value;
         const apiKey = this.providerAccessTokenInput.value;
 
-        const ai = new OpenAI({
-            baseURL: baseUrl,
-            apiKey: apiKey,
-            dangerouslyAllowBrowser: true,
-        });
-        try {
-            await ai.models.list();
+        const ai = new Model(Provider.OpenAICompatible, baseUrl, model, apiKey);
+        if (await ai.check()) {
             button.variant = 'success';
             button.label = 'Success';
-        } catch {
-            button.variant = 'danger';
-            button.label = 'Failed';
+            return;
         }
+        button.variant = 'danger';
+        button.label = 'Failed';
     }
 
     render() {

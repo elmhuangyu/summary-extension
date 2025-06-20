@@ -69,16 +69,20 @@ export class AppSettings {
     public getEnabledModels(): string[] {
         const models: string[] = [];
 
-        this.enabledOpenaiModels.forEach((model) => {
-            models.push('openai/'+model);
-        });
+        if (this.openaiApiKey !== '') {
+            this.enabledOpenaiModels.forEach((model) => {
+                models.push('openai/' + model);
+            });
+        }
 
-        this.enabledGeminiModels.forEach((model) => {
-            models.push('gemini/'+model);
-        });
+        if (this.geminiApiKey !== '') {
+            this.enabledGeminiModels.forEach((model) => {
+                models.push('gemini/' + model);
+            });
+        }
 
         this.openaiCompatibleProviders.forEach((model) => {
-            models.push('custom/'+model.name);
+            models.push('custom/' + model.name);
         });
 
         return models;

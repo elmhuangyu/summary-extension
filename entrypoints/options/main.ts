@@ -108,6 +108,8 @@ export class SettingsForm extends LitElement {
     private handleSubmit(event: Event) {
         const formData = new FormData(this.settingsForm);
         const newSettings = new AppSettings();
+        newSettings.enabledOpenaiModels = [];
+        newSettings.enabledGeminiModels = [];
 
         formData.forEach((value, key) => {
             if (key.startsWith('openaiModel-')) {
@@ -204,8 +206,9 @@ export class SettingsForm extends LitElement {
                         name="defaultAi"
                         .value=${this.settings.defaultAi}
                     >
-                        <option value="openai">OpenAI</option>
-                        <option value="gemini">Gemini</option>
+                        ${this.settings.getEnabledModels().map(model => html`
+                            <option value="${model}" ?selected=${model === this.settings.defaultAi}>${model}</option>
+                        `)}
                     </select>
                 </div>
 

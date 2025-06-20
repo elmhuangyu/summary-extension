@@ -65,7 +65,7 @@ export class Model {
     }
 
     private async openaiChat(prompt: string, systemPrompt: string): Promise<string | null> {
-        var baseUrl = 'https://api.openai.com/v1';
+        let baseUrl = 'https://api.openai.com/v1';
         if (this.provider === Provider.OpenAICompatible) {
             baseUrl = this.baseUrl;
         }

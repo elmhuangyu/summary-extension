@@ -117,6 +117,7 @@ export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
 
 export async function saveSettings(settings: AppSettings) {
     await storage.setItem('local:settings', settings);
+    await storage.setItem('local:debugMode', settings.debugMode);
 }
 
 export async function loadOpenAiCompatibleProviders(): Promise<OpenAiCompatibleProvider[]> {

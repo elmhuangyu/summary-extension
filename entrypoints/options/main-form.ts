@@ -7,6 +7,7 @@ import { OpenAI } from 'openai';
 
 interface AppSettings {
     openaiApiKey: string;
+    openaiModel: string;
     geminiApiKey: string;
     geminiModel: string;
     defaultAi: string;
@@ -28,6 +29,7 @@ export class SettingsForm extends LitElement {
     @property({ type: Object })
     settings: AppSettings = {
         openaiApiKey: '',
+        openaiModel: 'gpt-4.1-nano',
         geminiApiKey: '',
         geminiModel: 'gemini-2.5-flash-lite-preview-06-17',
         defaultAi: 'gemini',
@@ -187,6 +189,18 @@ export class SettingsForm extends LitElement {
                     </select>
                 </div>
 
+                <div>
+                    <label for="defaultAi">Default AI Model:</label>
+                    <select
+                        id="defaultAi"
+                        name="defaultAi"
+                        .value=${this.settings.defaultAi}
+                    >
+                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                </div>
+
                 <h2>AI Provider</h2>
                 <h3>OpenAI</h3>
                 <div>
@@ -201,6 +215,19 @@ export class SettingsForm extends LitElement {
                         <colored-button label="Test" @click=${this.testOpenAiConnection}></colored-button>
                     </div>
                 </div>
+                <div>
+                    <label for="openaiModel">Default OpenAI Model:</label>
+                    <select
+                        id="openaiModel"
+                        name="openaiModel"
+                        .value=${this.settings.openaiModel}
+                    >
+                        <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+                        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    </select>
+                </div>
+
                 <h3>Gemini</h3>
                 <div>
                     <label for="geminiApiKey">Gemini API Key:</label>
@@ -225,18 +252,6 @@ export class SettingsForm extends LitElement {
                         <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                         <option value="gemini-2.5-pro">gemini-2.5-pro</option>
                         <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label for="defaultAi">Default AI Model:</label>
-                    <select
-                        id="defaultAi"
-                        name="defaultAi"
-                        .value=${this.settings.defaultAi}
-                    >
-                        <option value="openai">OpenAI</option>
-                        <option value="gemini">Gemini</option>
                     </select>
                 </div>
 

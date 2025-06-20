@@ -1,4 +1,4 @@
-import { AppSettings } from "#imports";
+import { storage } from "#imports";
 
 export const allowedOpenAiModels = [
     'gpt-4.1-nano',
@@ -23,6 +23,13 @@ export const supportedLanguage = [
     "Japanese",
 ];
 
+export interface OpenAiCompatibleProvider {
+    name: string;
+    baseUrl: string;
+    model: string;
+    accessToken: string;
+}
+
 export interface AppSettings {
     openaiApiKey: string;
     enabledOpenaiModels: string[];
@@ -31,6 +38,7 @@ export interface AppSettings {
     defaultAi: string;
     language: string;
     debugMode: boolean;
+    openaiCompatibleProviders: OpenAiCompatibleProvider[];
 }
 
 export const defaultSettings: AppSettings = {
@@ -38,9 +46,10 @@ export const defaultSettings: AppSettings = {
     enabledOpenaiModels: [allowedOpenAiModels[0]],
     geminiApiKey: '',
     enabledGeminiModels: [allowedGeminiModels[0]],
-    defaultAi: 'gemini',
+    defaultAi: 'gemini/'+allowedGeminiModels[0],
     language: supportedLanguage[0],
     debugMode: false,
+    openaiCompatibleProviders: [],
 };
 
 export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
@@ -48,6 +57,13 @@ export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
     if (!settings) {
         return defaultSettings;
     }
+
+    cleanupExpiriedSettings(settings);
+    
+    return settings;
+}
+
+function cleanupExpiriedSettings(settings: AppSettings) {
     // remove old allowed models.
     settings.enabledOpenaiModels = settings.enabledOpenaiModels.filter(
         (model: string) => allowedOpenAiModels.includes(model));
@@ -59,17 +75,19 @@ export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
     if (settings.geminiApiKey !== '' && settings.enabledGeminiModels.length === 0) {
         settings.enabledGeminiModels = [allowedGeminiModels[0]];
     }
-    return settings;
 }
 
-export interface OpenAiCompatibleProvider {
-    name: string;
-    baseUrl: string;
-    model: string;
-    accessToken: string;
+export async function saveSettings(settings:AppSettings) {
+    await storage.setItem('local:settings', settings);
 }
 
 export async function loadOpenAiCompatibleProviders(): Promise<OpenAiCompatibleProvider[]> {
-    const providers = await storage.getItem<OpenAiCompatibleProvider[]>('local:openAiProviders');
-    return providers ? providers : [];
+    const settings = await loadSettingsFromExtensionLocal();
+    return settings.openaiCompatibleProviders;
+}
+
+export async function saveOpenAiCompatibleProviders(providers:OpenAiCompatibleProvider[] ) {
+    const settings = await loadSettingsFromExtensionLocal();
+    settings.openaiCompatibleProviders = providers;
+    await saveSettings(settings);
 }

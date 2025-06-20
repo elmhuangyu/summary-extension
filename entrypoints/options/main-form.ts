@@ -1,7 +1,7 @@
+import { storage } from "#imports";
 import { LitElement, html, css } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
-import { storage } from '#imports';
 import { GoogleGenAI } from '@google/genai';
 import { OpenAI } from 'openai';
 import {
@@ -13,6 +13,8 @@ import {
     supportedLanguage,
     OpenAiCompatibleProvider,
     loadOpenAiCompatibleProviders,
+    saveOpenAiCompatibleProviders,
+    saveSettings,
 } from '../../utils/settings';
 
 @customElement('settings-form')
@@ -21,13 +23,15 @@ export class SettingsForm extends LitElement {
     private settingsForm!: HTMLFormElement;
 
     @query('#openaiApiKey')
-    openaiApiKey!: HTMLInputElement;
+    private openaiApiKey!: HTMLInputElement;
 
     @query('#geminiApiKey')
-    geminiApiKey!: HTMLInputElement;
+    private geminiApiKey!: HTMLInputElement;
 
-    @property({ type: Object })
-    settings: AppSettings = defaultSettings;
+    @state()
+    private settings: AppSettings = defaultSettings;
+
+    private unwatch: () => void = () => {};
 
     static styles = css`
         :host {
@@ -89,14 +93,19 @@ export class SettingsForm extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this.loadSettings();
+        this.unwatch = storage.watch<AppSettings>('local:settings', (newSettings, oldSettings) => {
+            this.loadSettings();
+            this.requestUpdate();
+        });
+    }
+
+    disconnectedCallback() {
+        this.unwatch();
+        super.disconnectedCallback();
     }
 
     private async loadSettings() {
         this.settings = await loadSettingsFromExtensionLocal();
-    }
-
-    private saveSettings() {
-        storage.setItem('local:settings', this.settings);
     }
 
     private handleSubmit(event: Event) {
@@ -126,7 +135,7 @@ export class SettingsForm extends LitElement {
         });
 
         this.settings = { ...this.settings, ...newSettings as AppSettings };
-        this.saveSettings();
+        saveSettings(this.settings);
     }
 
     private async testOpenAiConnection(event: Event) {
@@ -386,10 +395,6 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
         this.providers = await loadOpenAiCompatibleProviders();
     }
 
-    private async saveProviders() {
-        await storage.setItem("local:openAiProviders", this.providers);
-    }
-
     private addProvider() {
         const newProviderName = this.providerNameInput.value.trim();
 
@@ -417,7 +422,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
         };
 
         this.providers = [...this.providers, newProvider];
-        this.saveProviders();
+        saveOpenAiCompatibleProviders(this.providers);
 
         // Clear the form fields
         this.providerNameInput.value = '';
@@ -429,7 +434,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
     private deleteProvider(nameToDelete: string) { // Now accepts 'name' instead of 'id'
         if (confirm(`Are you sure you want to delete the provider "${nameToDelete}"?`)) {
             this.providers = this.providers.filter(provider => provider.name !== nameToDelete);
-            this.saveProviders();
+            saveOpenAiCompatibleProviders(this.providers);
         }
     }
 

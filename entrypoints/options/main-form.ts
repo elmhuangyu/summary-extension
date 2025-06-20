@@ -5,11 +5,24 @@ import { storage } from '#imports';
 import { GoogleGenAI } from '@google/genai';
 import { OpenAI } from 'openai';
 
+const allowedOpenAiModels = [
+    'gpt-4.1-nano',
+    'gpt-4.1-mini',
+    'gpt-4o-mini',
+];
+
+const allowedGeminiModels = [
+    'gemini-2.5-flash-lite-preview-06-17',
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-2.0-flash',
+];
+
 interface AppSettings {
     openaiApiKey: string;
-    openaiModel: string;
+    enabledOpenaiModels: string[];
     geminiApiKey: string;
-    geminiModel: string;
+    enabledGeminiModels: string[];
     defaultAi: string;
     language: string;
     debugMode: boolean;
@@ -29,9 +42,9 @@ export class SettingsForm extends LitElement {
     @property({ type: Object })
     settings: AppSettings = {
         openaiApiKey: '',
-        openaiModel: 'gpt-4.1-nano',
+        enabledOpenaiModels: ['gpt-4.1-nano'], // Default to gpt-4.1-nano enabled
         geminiApiKey: '',
-        geminiModel: 'gemini-2.5-flash-lite-preview-06-17',
+        enabledGeminiModels: [allowedGeminiModels[0]], // Default to gemini-2.5-flash-lite-preview-06-17 enabled
         defaultAi: 'gemini',
         language: 'en',
         debugMode: false,
@@ -103,6 +116,11 @@ export class SettingsForm extends LitElement {
         const settings = await storage.getItem<AppSettings>('local:settings');
         if (settings) {
             this.settings = settings;
+            // remove old allowed models.
+            this.settings.enabledOpenaiModels = this.settings.enabledOpenaiModels.filter(
+                model => allowedOpenAiModels.includes(model));
+            this.settings.enabledGeminiModels = this.settings.enabledGeminiModels.filter(
+                model => allowedGeminiModels.includes(model));
         }
     }
 
@@ -114,12 +132,25 @@ export class SettingsForm extends LitElement {
         const formData = new FormData(this.settingsForm);
         const newSettings: Partial<AppSettings> = {};
 
+        // Initialize arrays for enabled models, ensuring they are always present even if no checkboxes are checked
+        newSettings.enabledOpenaiModels = [];
+        newSettings.enabledGeminiModels = [];
+
         formData.forEach((value, key) => {
-            const settingKey = key as keyof AppSettings;
-            if (settingKey === 'debugMode') {
-                newSettings.debugMode = (value === 'on'); // Checkboxes submit 'on' if checked, otherwise not present
-            } else {
-                newSettings[settingKey] = value as string;
+            if (key.startsWith('openaiModel-')) {
+                (newSettings.enabledOpenaiModels as string[]).push(value as string);
+            } else if (key.startsWith('geminiModel-')) {
+                (newSettings.enabledGeminiModels as string[]).push(value as string);
+            } else if (key === 'debugMode') {
+                newSettings.debugMode = (value === 'on');
+            } else if (key === 'openaiApiKey') {
+                newSettings.openaiApiKey = value as string;
+            } else if (key === 'geminiApiKey') {
+                newSettings.geminiApiKey = value as string;
+            } else if (key === 'defaultAi') {
+                newSettings.defaultAi = value as string;
+            } else if (key === 'language') {
+                newSettings.language = value as string;
             }
         });
 
@@ -224,16 +255,21 @@ export class SettingsForm extends LitElement {
                     </div>
                 </div>
                 <div>
-                    <label for="openaiModel">Default OpenAI Model:</label>
-                    <select
-                        id="openaiModel"
-                        name="openaiModel"
-                        .value=${this.settings.openaiModel}
-                    >
-                        <option value="gpt-4.1-nano">gpt-4.1-nano</option>
-                        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                        <option value="gpt-4o-mini">gpt-4o-mini</option>
-                    </select>
+                    <label>Enable OpenAI Models:</label>
+                    <div class="checkbox-container">
+                        ${allowedOpenAiModels.map(model => html`
+                            <div class="oneline">
+                                <input
+                                    type="checkbox"
+                                    id="openaiModel-${model}"
+                                    name="openaiModel-${model}"
+                                    value="${model}"
+                                    .checked=${this.settings.enabledOpenaiModels.includes(model)}
+                                >
+                                <label for="openaiModel-${model}">${model}</label>
+                            </div>
+                        `)}
+                    </div>
                 </div>
 
                 <h3>Gemini</h3>
@@ -250,17 +286,21 @@ export class SettingsForm extends LitElement {
                     </div>
                 </div>
                 <div>
-                    <label for="geminiModel">Default Gemini Model:</label>
-                    <select
-                        id="geminiModel"
-                        name="geminiModel"
-                        .value=${this.settings.geminiModel}
-                    >
-                        <option value="gemini-2.5-flash-lite-preview-06-17">gemini-2.5-flash-lite-preview-06-17</option>
-                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                        <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-                    </select>
+                    <label>Enable Gemini Models:</label>
+                    <div class="checkbox-container">
+                        ${allowedGeminiModels.map(model => html`
+                            <div class="oneline">
+                                <input
+                                    type="checkbox"
+                                    id="geminiModel-${model}"
+                                    name="geminiModel-${model}"
+                                    value="${model}"
+                                    .checked=${this.settings.enabledGeminiModels.includes(model)}
+                                >
+                                <label for="geminiModel-${model}">${model}</label>
+                            </div>
+                        `)}
+                    </div>
                 </div>
 
                 <colored-button label="Save Settings" @click=${this.handleSubmit}></colored-button>
@@ -586,7 +626,7 @@ export class ColoredButton extends LitElement {
      * Type of the button
      * Defaults to 'button'.
      */
-    @property({type: String})
+    @property({ type: String })
     btntype: string = 'button';
 
     /**

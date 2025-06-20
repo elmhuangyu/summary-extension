@@ -4,29 +4,16 @@ import { live } from 'lit/directives/live.js';
 import { storage } from '#imports';
 import { GoogleGenAI } from '@google/genai';
 import { OpenAI } from 'openai';
-
-const allowedOpenAiModels = [
-    'gpt-4.1-nano',
-    'gpt-4.1-mini',
-    'gpt-4o-mini',
-];
-
-const allowedGeminiModels = [
-    'gemini-2.5-flash-lite-preview-06-17',
-    'gemini-2.5-flash',
-    'gemini-2.5-pro',
-    'gemini-2.0-flash',
-];
-
-interface AppSettings {
-    openaiApiKey: string;
-    enabledOpenaiModels: string[];
-    geminiApiKey: string;
-    enabledGeminiModels: string[];
-    defaultAi: string;
-    language: string;
-    debugMode: boolean;
-}
+import {
+    AppSettings,
+    allowedOpenAiModels,
+    allowedGeminiModels,
+    loadSettingsFromExtensionLocal,
+    defaultSettings,
+    supportedLanguage,
+    OpenAiCompatibleProvider,
+    loadOpenAiCompatibleProviders,
+} from '../../utils/settings';
 
 @customElement('settings-form')
 export class SettingsForm extends LitElement {
@@ -40,15 +27,7 @@ export class SettingsForm extends LitElement {
     geminiApiKey!: HTMLInputElement;
 
     @property({ type: Object })
-    settings: AppSettings = {
-        openaiApiKey: '',
-        enabledOpenaiModels: ['gpt-4.1-nano'], // Default to gpt-4.1-nano enabled
-        geminiApiKey: '',
-        enabledGeminiModels: [allowedGeminiModels[0]], // Default to gemini-2.5-flash-lite-preview-06-17 enabled
-        defaultAi: 'gemini',
-        language: 'en',
-        debugMode: false,
-    };
+    settings: AppSettings = defaultSettings;
 
     static styles = css`
         :host {
@@ -113,21 +92,7 @@ export class SettingsForm extends LitElement {
     }
 
     private async loadSettings() {
-        const settings = await storage.getItem<AppSettings>('local:settings');
-        if (settings) {
-            this.settings = settings;
-            // remove old allowed models.
-            this.settings.enabledOpenaiModels = this.settings.enabledOpenaiModels.filter(
-                model => allowedOpenAiModels.includes(model));
-            if (this.settings.openaiApiKey !== '' && this.settings.enabledOpenaiModels.length === 0) {
-                this.settings.enabledOpenaiModels = [allowedOpenAiModels[0]];
-            }
-            this.settings.enabledGeminiModels = this.settings.enabledGeminiModels.filter(
-                model => allowedGeminiModels.includes(model));
-            if (this.settings.geminiApiKey !== '' && this.settings.enabledGeminiModels.length === 0) {
-                this.settings.enabledGeminiModels = [allowedGeminiModels[0]];
-            }
-        }
+        this.settings = await loadSettingsFromExtensionLocal();
     }
 
     private saveSettings() {
@@ -225,12 +190,9 @@ export class SettingsForm extends LitElement {
                         name="language"
                         .value=${this.settings.language}
                     >
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="ja">Japanese</option>
-                        <option value="zh">Chinese</option>
+                        ${supportedLanguage.map(lang => html`
+                            <option value="${lang}">${lang}</option>
+                        `)}
                     </select>
                 </div>
 
@@ -315,17 +277,10 @@ export class SettingsForm extends LitElement {
     }
 }
 
-interface OpenAiProvider {
-    name: string;
-    baseUrl: string;
-    model: string;
-    accessToken: string;
-}
-
-@customElement('openai-providers-form')
-export class OpenAiProvidersForm extends LitElement {
+@customElement('openai-compatible-providers-form')
+export class OpenAiCompatibleProvidersForm extends LitElement {
     @state()
-    providers: OpenAiProvider[] = [];
+    providers: OpenAiCompatibleProvider[] = [];
 
     @query('#providerName')
     private providerNameInput!: HTMLInputElement;
@@ -414,17 +369,6 @@ export class OpenAiProvidersForm extends LitElement {
             color: #666;
             word-break: break-all; /* Helps with long URLs */
         }
-        .provider-item button.delete-btn {
-            background-color: #dc3545;
-            color: white;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8em;
-            margin-left: 15px;
-            flex-shrink: 0; /* Prevent button from shrinking */
-        }
         div.oneline {
             margin: 0;
             display: flex;
@@ -439,10 +383,7 @@ export class OpenAiProvidersForm extends LitElement {
     }
 
     private async loadProviders() {
-        const data = await storage.getItem<OpenAiProvider[]>('local:openAiProviders');
-        if (data) {
-            this.providers = data;
-        }
+        this.providers = await loadOpenAiCompatibleProviders();
     }
 
     private async saveProviders() {
@@ -468,7 +409,7 @@ export class OpenAiProvidersForm extends LitElement {
             return;
         }
 
-        const newProvider: OpenAiProvider = {
+        const newProvider: OpenAiCompatibleProvider = {
             name: newProviderName, // Name is now the identifier
             baseUrl: this.providerBaseUrlInput.value.trim(),
             model: this.providerModelInput.value.trim(),
@@ -603,7 +544,6 @@ export class ColoredButton extends LitElement {
         border: none;
         border-radius: 5px;
         cursor: pointer;
-        font-size: 1rem;
         color: white; /* Default text color for dark backgrounds */
         transition: background-color 0.2s ease, opacity 0.2s ease;
         font-family: inherit; /* Inherit font from parent */
@@ -659,7 +599,7 @@ export class ColoredButton extends LitElement {
     render() {
         return html`
         <button type="${this.btntype}" class="${this.variant}">
-            <slot>${this.label}</slot>
+            ${this.label}
         </button>
         `;
     }

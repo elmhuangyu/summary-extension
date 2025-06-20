@@ -128,6 +128,8 @@ export class SettingsForm extends LitElement {
     }
 
     private async testOpenAiConnection(event: Event) {
+        const button = event.target as ColoredButton;
+
         const apiKey = this.openaiApiKey.value;
         if (!apiKey) {
             return;
@@ -139,13 +141,17 @@ export class SettingsForm extends LitElement {
         });
         try {
             await ai.models.list();
-            alert('OpenAI Connected');
+            button.variant = 'success';
+            button.label = 'Success';
         } catch {
-            alert('OpenAI does not connected');
+            button.variant = 'danger';
+            button.label = 'Failed';
         }
     }
 
-    private async testGeminiConnection() {
+    private async testGeminiConnection(event: Event) {
+        const button = event.target as ColoredButton;
+
         const apiKey = this.geminiApiKey.value;
         if (!apiKey) {
             return;
@@ -154,9 +160,11 @@ export class SettingsForm extends LitElement {
         const ai = new GoogleGenAI({ apiKey: apiKey });
         try {
             await ai.models.list();
-            alert('Gemini Connected');
+            button.variant = 'success';
+            button.label = 'Success';
         } catch (e) {
-            alert('Gemini does not connected');
+            button.variant = 'danger';
+            button.label = 'Failed';
         }
     }
 
@@ -438,7 +446,9 @@ export class OpenAiProvidersForm extends LitElement {
         }
     }
 
-    private async checkConnection() {
+    private async checkConnection(event: Event) {
+        const button = event.target as ColoredButton;
+
         if (this.providerBaseUrlInput.value === '' || this.providerAccessTokenInput.value === '') {
             return;
         }
@@ -453,9 +463,11 @@ export class OpenAiProvidersForm extends LitElement {
         });
         try {
             await ai.models.list();
-            alert('LLM Connected');
+            button.variant = 'success';
+            button.label = 'Success';
         } catch {
-            alert('LLM does not connected');
+            button.variant = 'danger';
+            button.label = 'Failed';
         }
     }
 

@@ -135,8 +135,7 @@ export class SettingsForm extends LitElement {
 
     private async testOpenAiConnection(event: Event) {
         const button = event.target as ColoredButton;
-        button.variant = 'warning';
-        button.label = 'Testing...';
+        button.loading = true;
 
         const apiKey = this.openaiApiKey.value;
         if (!apiKey) {
@@ -145,18 +144,19 @@ export class SettingsForm extends LitElement {
 
         const ai = new Model(Provider.OpenAI, '', '', apiKey);
         if (await ai.check()) {
+            button.loading = false;
             button.variant = 'success';
             button.label = 'Success';
             return;
         }
+        button.loading = false;
         button.variant = 'danger';
         button.label = 'Failed';
     }
 
     private async testGeminiConnection(event: Event) {
         const button = event.target as ColoredButton;
-        button.variant = 'warning';
-        button.label = 'Testing...';
+        button.loading = true;
 
         const apiKey = this.geminiApiKey.value;
         if (!apiKey) {
@@ -165,10 +165,12 @@ export class SettingsForm extends LitElement {
 
         const ai = new Model(Provider.Gemini, '', '', apiKey);
         if (await ai.check()) {
+            button.loading = false;
             button.variant = 'success';
             button.label = 'Success';
             return;
         }
+        button.loading = false;
         button.variant = 'danger';
         button.label = 'Failed';
     }
@@ -434,8 +436,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
 
     private async checkConnection(event: Event) {
         const button = event.target as ColoredButton;
-        button.variant = 'warning';
-        button.label = 'Testing...';
+        button.loading = true;
 
         if (this.providerBaseUrlInput.value === '' ||
             this.providerModelInput.value === '' ||
@@ -449,10 +450,12 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
 
         const ai = new Model(Provider.OpenAICompatible, baseUrl, model, apiKey);
         if (await ai.check()) {
+            button.loading = false;
             button.variant = 'success';
             button.label = 'Success';
             return;
         }
+        button.loading = false;
         button.variant = 'danger';
         button.label = 'Failed';
     }
@@ -538,6 +541,35 @@ type ButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'da
 @customElement('colored-button')
 export class ColoredButton extends LitElement {
     static styles = css`
+    .loader {
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        position: relative;
+        animation: rotate 1s linear infinite
+    }
+    .loader::before {
+        content: "";
+        box-sizing: border-box;
+        position: absolute;
+        inset: 0px;
+        border-radius: 50%;
+        border: 5px solid #FFF;
+        animation: prixClipFix 2s linear infinite ;
+    }
+
+    @keyframes rotate {
+        100%   {transform: rotate(360deg)}
+    }
+
+    @keyframes prixClipFix {
+        0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+        25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+        50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+        75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+        100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+    }
+
     button {
         padding: 10px 15px;
         border: none;
@@ -590,12 +622,19 @@ export class ColoredButton extends LitElement {
     variant: ButtonVariant = 'primary';
 
     /**
-     * Whether the button is disabled.
+     * Whether using the loading
      */
-    @property({ type: Boolean })
-    disabled: boolean = false;
+    @property({ type: Boolean})
+    loading: boolean = false;
 
     render() {
+        if (this.loading) {
+            return html`
+            <button class="warning">
+                <span class="loader"></span>
+            </button>
+            `;
+        }
         return html`
         <button type="${this.btntype}" class="${this.variant}">
             ${this.label}

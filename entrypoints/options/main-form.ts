@@ -119,8 +119,14 @@ export class SettingsForm extends LitElement {
             // remove old allowed models.
             this.settings.enabledOpenaiModels = this.settings.enabledOpenaiModels.filter(
                 model => allowedOpenAiModels.includes(model));
+            if (this.settings.openaiApiKey !== '' && this.settings.enabledOpenaiModels.length === 0) {
+                this.settings.enabledOpenaiModels = [allowedOpenAiModels[0]];
+            }
             this.settings.enabledGeminiModels = this.settings.enabledGeminiModels.filter(
                 model => allowedGeminiModels.includes(model));
+            if (this.settings.geminiApiKey !== '' && this.settings.enabledGeminiModels.length === 0) {
+                this.settings.enabledGeminiModels = [allowedGeminiModels[0]];
+            }
         }
     }
 

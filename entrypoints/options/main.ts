@@ -9,7 +9,6 @@ import {
     allowedOpenAiModels,
     allowedGeminiModels,
     loadSettingsFromExtensionLocal,
-    defaultSettings,
     supportedLanguage,
     OpenAiCompatibleProvider,
     loadOpenAiCompatibleProviders,
@@ -29,7 +28,7 @@ export class SettingsForm extends LitElement {
     private geminiApiKey!: HTMLInputElement;
 
     @state()
-    private settings: AppSettings = defaultSettings;
+    private settings: AppSettings = new AppSettings();
 
     private unwatch: () => void = () => {};
 
@@ -110,17 +109,13 @@ export class SettingsForm extends LitElement {
 
     private handleSubmit(event: Event) {
         const formData = new FormData(this.settingsForm);
-        const newSettings: Partial<AppSettings> = {};
-
-        // Initialize arrays for enabled models, ensuring they are always present even if no checkboxes are checked
-        newSettings.enabledOpenaiModels = [];
-        newSettings.enabledGeminiModels = [];
+        const newSettings = new AppSettings();
 
         formData.forEach((value, key) => {
             if (key.startsWith('openaiModel-')) {
-                (newSettings.enabledOpenaiModels as string[]).push(value as string);
+                newSettings.enabledOpenaiModels.push(value as string);
             } else if (key.startsWith('geminiModel-')) {
-                (newSettings.enabledGeminiModels as string[]).push(value as string);
+                newSettings.enabledGeminiModels.push(value as string);
             } else if (key === 'debugMode') {
                 newSettings.debugMode = (value === 'on');
             } else if (key === 'openaiApiKey') {
@@ -134,7 +129,7 @@ export class SettingsForm extends LitElement {
             }
         });
 
-        this.settings = { ...this.settings, ...newSettings as AppSettings };
+        this.settings = newSettings;
         saveSettings(this.settings);
     }
 

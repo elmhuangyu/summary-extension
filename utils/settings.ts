@@ -30,7 +30,7 @@ export interface OpenAiCompatibleProvider {
     accessToken: string;
 }
 
-export interface AppSettings {
+export class AppSettings {
     openaiApiKey: string;
     enabledOpenaiModels: string[];
     geminiApiKey: string;
@@ -39,45 +39,44 @@ export interface AppSettings {
     language: string;
     debugMode: boolean;
     openaiCompatibleProviders: OpenAiCompatibleProvider[];
-}
 
-export const defaultSettings: AppSettings = {
-    openaiApiKey: '',
-    enabledOpenaiModels: [allowedOpenAiModels[0]],
-    geminiApiKey: '',
-    enabledGeminiModels: [allowedGeminiModels[0]],
-    defaultAi: 'gemini/'+allowedGeminiModels[0],
-    language: supportedLanguage[0],
-    debugMode: false,
-    openaiCompatibleProviders: [],
-};
-
-export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
-    const settings = await storage.getItem<AppSettings>('local:settings');
-    if (!settings) {
-        return defaultSettings;
+    constructor() {
+        this.openaiApiKey = '';
+        this.enabledOpenaiModels = [allowedOpenAiModels[0]];
+        this.geminiApiKey = '';
+        this.enabledGeminiModels = [allowedGeminiModels[0]];
+        this.defaultAi = 'gemini/' + allowedGeminiModels[0];
+        this.language = supportedLanguage[0];
+        this.debugMode = false;
+        this.openaiCompatibleProviders = [];
     }
 
-    cleanupExpiriedSettings(settings);
-    
+    cleanupExpiriedSettings() {
+        // remove old allowed models.
+        this.enabledOpenaiModels = this.enabledOpenaiModels.filter(
+            (model: string) => allowedOpenAiModels.includes(model));
+        if (this.openaiApiKey !== '' && this.enabledOpenaiModels.length === 0) {
+            this.enabledOpenaiModels = [allowedOpenAiModels[0]];
+        }
+        this.enabledGeminiModels = this.enabledGeminiModels.filter(
+            (model: string) => allowedGeminiModels.includes(model));
+        if (this.geminiApiKey !== '' && this.enabledGeminiModels.length === 0) {
+            this.enabledGeminiModels = [allowedGeminiModels[0]];
+        }
+    }
+}
+
+export async function loadSettingsFromExtensionLocal(): Promise<AppSettings> {
+    const settingsData = await storage.getItem<AppSettings>('local:settings');
+    const settings = new AppSettings(); // Create a new instance to ensure methods are available
+    if (settingsData) {
+        Object.assign(settings, settingsData); // Copy properties from stored data
+        settings.cleanupExpiriedSettings();
+    }
     return settings;
 }
 
-function cleanupExpiriedSettings(settings: AppSettings) {
-    // remove old allowed models.
-    settings.enabledOpenaiModels = settings.enabledOpenaiModels.filter(
-        (model: string) => allowedOpenAiModels.includes(model));
-    if (settings.openaiApiKey !== '' && settings.enabledOpenaiModels.length === 0) {
-        settings.enabledOpenaiModels = [allowedOpenAiModels[0]];
-    }
-    settings.enabledGeminiModels = settings.enabledGeminiModels.filter(
-        (model: string) => allowedGeminiModels.includes(model));
-    if (settings.geminiApiKey !== '' && settings.enabledGeminiModels.length === 0) {
-        settings.enabledGeminiModels = [allowedGeminiModels[0]];
-    }
-}
-
-export async function saveSettings(settings:AppSettings) {
+export async function saveSettings(settings: AppSettings) {
     await storage.setItem('local:settings', settings);
 }
 
@@ -86,7 +85,7 @@ export async function loadOpenAiCompatibleProviders(): Promise<OpenAiCompatibleP
     return settings.openaiCompatibleProviders;
 }
 
-export async function saveOpenAiCompatibleProviders(providers:OpenAiCompatibleProvider[] ) {
+export async function saveOpenAiCompatibleProviders(providers: OpenAiCompatibleProvider[]) {
     const settings = await loadSettingsFromExtensionLocal();
     settings.openaiCompatibleProviders = providers;
     await saveSettings(settings);

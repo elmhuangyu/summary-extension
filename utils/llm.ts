@@ -57,9 +57,9 @@ export class Model {
         }
     }
 
-    async chat(prompt: string, systemPrompt: string): Promise<string | null> {
+    async chat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string | null> {
         if (this.provider == Provider.Gemini) {
-            return this.geminiChat(prompt, systemPrompt);
+            return this.geminiChat(prompt, systemPrompt, thinking);
         }
         return this.openaiChat(prompt, systemPrompt);
     }
@@ -102,12 +102,13 @@ export class Model {
         return completion.choices[0].message.content;
     }
 
-    private async geminiChat(prompt: string, systemPrompt: string): Promise<string | null> {
+    private async geminiChat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string | null> {
         const ai = new GoogleGenAI({ apiKey: this.apiKey });
+        const thinkingBudget = thinking ? -1 : 0;
 
         const config: GenerateContentConfig = {
             thinkingConfig: {
-                thinkingBudget: 0,
+                thinkingBudget: thinkingBudget,
             },
             responseMimeType: 'text/plain',
             systemInstruction: [],

@@ -17,6 +17,52 @@ import { Provider, Model } from '@/utils/llm';
 import '@/components/coloered-button';
 import { ColoredButton } from '@/components/coloered-button';
 
+const commonCss = css`
+    :host {
+        display: block;
+        font-family: sans-serif;
+        max-width: 600px;
+        margin: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+    h2 {
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+    }
+    h2:first-of-type {
+        margin-top: 0;
+    }
+    div {
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+    div.oneline {
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+    }
+    label {
+        font-weight: bold;
+        color: #555;
+        margin: 5px;
+    }
+    input[type="password"] {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+`;
+
 @customElement('settings-form')
 export class SettingsForm extends LitElement {
     @query('#settingsForm')
@@ -33,49 +79,14 @@ export class SettingsForm extends LitElement {
 
     private unwatch: () => void = () => { };
 
-    static styles = css`
-        :host {
-            display: block;
-            font-family: sans-serif;
-            max-width: 600px;
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        h2 {
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-        h2:first-of-type {
-            margin-top: 0;
-        }
+    static styles = [
+        commonCss,
+        css`
         h3 {
             color: #333;
             margin-top: 15px;
             margin-bottom: 10px;
         }
-        div {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        div.oneline {
-            margin: 0;
-            display: flex;
-            flex-direction: row;
-            gap: 5px;
-        }
-        label {
-            margin: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="password"],
         select {
             padding: 10px;
             border: 1px solid #ddd;
@@ -87,7 +98,7 @@ export class SettingsForm extends LitElement {
             display: inline;
             width: fit-content;
         }
-    `;
+    `];
 
     connectedCallback() {
         super.connectedCallback();
@@ -302,24 +313,11 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
     @query('#providerAccessToken')
     private providerAccessTokenInput!: HTMLInputElement;
 
-    static styles = css`
+    static styles = [
+        commonCss,
+        css`
         :host {
-            display: block;
-            font-family: sans-serif;
-            max-width: 600px;
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            background-color: #f9f9f9;
-        }
-        h2 {
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-top: 0;
-            margin-bottom: 15px;
         }
         fieldset {
             border: 1px solid #ddd;
@@ -332,19 +330,8 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             color: #007bff;
             padding: 0 10px;
         }
-        div {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
         input[type="text"],
-        input[type="url"],
-        input[type="password"] {
+        input[type="url"] {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -376,13 +363,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             color: #666;
             word-break: break-all; /* Helps with long URLs */
         }
-        div.oneline {
-            margin: 0;
-            display: flex;
-            flex-direction: row;
-            gap: 5px;
-        }
-    `;
+    `];
 
     connectedCallback() {
         super.connectedCallback();

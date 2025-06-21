@@ -3,30 +3,33 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import 'iconify-icon';
-type AiProvider = 'default' | 'openai' | 'gemini';
+import '@/utils/settings';
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
     // responseContent is now a list of strings
     @property({ type: Array })
-    responseContent: string[] = ['<p class="welcome-message">Welcome! Ask a question about the page or click Summarize.</p>'];
+    private responseContent: string[] = ['<p class="welcome-message">Welcome! Ask a question about the page or click Summarize.</p>'];
 
     @property({ type: String })
-    selectedAiProvider: AiProvider = 'default';
+    private selectedAiProvider: string = '';
 
     @property({ type: Boolean })
-    geminiThinkingModeEnabled: boolean = false;
+    private thinkingModeEnabled: boolean = false;
 
     @state()
-    private showGeminiThinkingMode: boolean = false;
+    private showThinkingMode: boolean = false;
 
     @property({ type: String })
-    chatInputText: string = '';
+    private chatInputText: string = '';
+
+    @property({ type: String })
+    private warningMessage: string = '';
 
     @query('#aiProviderPanel')
     private aiProviderPanelSelect!: HTMLSelectElement;
 
-    @query('#geminiThinkingMode')
+    @query('#thinkingMode')
     private geminiThinkingModeCheckbox!: HTMLInputElement;
 
     @query('#chatInput')
@@ -34,6 +37,11 @@ export class SidepanelComponent extends LitElement {
 
     @query('#responseArea')
     private responseAreaDiv!: HTMLDivElement; // Query for the scrollable div
+
+    @state()
+    private settings: AppSettings = new AppSettings();
+
+    private settingsUnwatch: () => void = () => { };
 
 
     static styles = css`
@@ -51,18 +59,14 @@ export class SidepanelComponent extends LitElement {
             display: flex;
             flex-direction: column;
             height: 100%;
-            padding: 15px;
+            padding: 8px;
             box-sizing: border-box;
         }
 
         #responseArea {
             overflow-y: auto;
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 15px;
+            padding: 5px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             color: #333;
             display: flex; /* Use flexbox for messages */
             flex-direction: column; /* Stack messages vertically */
@@ -74,8 +78,15 @@ export class SidepanelComponent extends LitElement {
         .message-container {
             padding: 8px 12px;
             border-radius: 6px;
-            background-color: #f0f0f0; /* Default background for messages */
             word-wrap: break-word; /* Ensure long words break */
+        }
+
+        .warning-message {
+            color: red;
+            font-weight: bold;
+            text-align: left;
+            padding: 5px;
+            background: #FFFFC5;
         }
 
         /* Specific styles for welcome message if you keep it */
@@ -115,12 +126,8 @@ export class SidepanelComponent extends LitElement {
         .ai-selector-panel {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background-color: #e9e9e9;
-            border-radius: 8px;
-            border: 1px solid #dcdcdc;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            gap: 5px;
+            flex-grow: 1;
         }
         .ai-selector-panel label {
             font-weight: bold;
@@ -132,81 +139,108 @@ export class SidepanelComponent extends LitElement {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 0.95rem;
             background-color: white;
         }
-        #geminiThinkingModeArea {
+        #thinkingModeArea {
             display: flex;
             align-items: center;
             gap: 5px;
-            margin-left: 10px;
             color: #555;
         }
-        #geminiThinkingModeArea input[type="checkbox"] {
+        #thinkingModeArea input[type="checkbox"] {
             transform: scale(1.1);
         }
 
-        .button-row {
+        .onerow {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             justify-content: space-between;
         }
-        .button-row button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            flex-grow: 1;
-            min-width: 100px;
-        }
-        .button-row button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        .button-row button:active {
-            transform: translateY(0);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
 
-        #summarizeBtn { background-color: #28a745; color: white; }
-        #clearBtn { background-color: #ffc107; color: #333; }
-        #settings { background-color: #6c757d; color: white; }
+        #summarizeBtn {
+            background-color: #28a745;
+            color: white;
+        }
+        /* ChatGPT style buttons */
+        #clearBtn, #settings, #sendChatBtn {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            color: #666; /* A neutral color for icons */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: unset; /* Remove min-width constraint */
+            flex-grow: 0; /* Don't let them grow */
+        }
+        #clearBtn:hover, #settings:hover, #sendChatBtn:hover {
+            color: #333; /* Darker on hover */
+            background-color: rgba(0,0,0,0.05); /* Slight background on hover */
+            transform: none; /* No transform on hover */
+        }
+        #clearBtn:active, #settings:active, #sendChatBtn:active {
+            transform: none; /* No transform on active */
+            box-shadow: none; /* No shadow on active */
+        }
 
         .chat-area {
             display: flex;
+            flex-direction: column;
             gap: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
         }
         #chatInput {
             flex-grow: 1;
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
             resize: vertical;
             min-height: 40px;
             max-height: 150px;
             box-sizing: border-box;
+            border: none; /* Remove border */
+            background-color: transparent; /* Remove background */
         }
-        #sendChatBtn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            flex-shrink: 0;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        #chatInput:focus {
+            outline: none; /* Remove outline on focus */
+            border: none; /* Ensure no border on focus */
+            background-color: transparent; /* Ensure no background on focus */
         }
+        /* The #sendChatBtn styles are now part of the combined rule above */
         iconify-icon {
             display: inline-block;
+            /* Ensure icons are centered within their new button styles */
+            vertical-align: middle;
         }
     `;
 
+    connectedCallback() {
+        super.connectedCallback();
+        this.loadSettings();
+        this.settingsUnwatch = storage.watch<AppSettings>('local:settings', (newSettings, oldSettings) => {
+            this.loadSettings();
+            this.requestUpdate();
+        });
+    }
+
+    disconnectedCallback() {
+        this.settingsUnwatch();
+        super.disconnectedCallback();
+    }
+
+    private async loadSettings() {
+        this.settings = await loadSettingsFromExtensionLocal();
+        if (this.selectedAiProvider === '') {
+            this.selectedAiProvider = this.settings.defaultAi;
+            if (this.selectedAiProvider.includes('gemini-2.5')) {
+                this.showThinkingMode = true;
+            }
+        }
+    }
+
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
-        this.updateGeminiThinkingModeVisibility();
+        this.updateThinkingModeVisibility();
         this.scrollToBottom(); // Scroll to bottom initially
     }
 
@@ -237,32 +271,15 @@ export class SidepanelComponent extends LitElement {
 
     private _handleAiProviderChange(event: Event) {
         const selectElement = event.target as HTMLSelectElement;
-        this.selectedAiProvider = selectElement.value as AiProvider;
-        this.updateGeminiThinkingModeVisibility();
-
-        this.dispatchEvent(new CustomEvent('ai-provider-changed', {
-            bubbles: true,
-            composed: true,
-            detail: { provider: this.selectedAiProvider }
-        }));
+        this.selectedAiProvider = selectElement.value;
+        this.updateThinkingModeVisibility();
     }
 
-    private updateGeminiThinkingModeVisibility() {
-        this.showGeminiThinkingMode = this.selectedAiProvider === 'gemini';
-        if (!this.showGeminiThinkingMode) {
-            this.geminiThinkingModeEnabled = false;
+    private updateThinkingModeVisibility() {
+        this.showThinkingMode = this.selectedAiProvider.includes('gemini-2.5');
+        if (!this.showThinkingMode) {
+            this.thinkingModeEnabled = false;
         }
-    }
-
-    private _handleGeminiThinkingModeChange(event: Event) {
-        const checkbox = event.target as HTMLInputElement;
-        this.geminiThinkingModeEnabled = checkbox.checked;
-
-        this.dispatchEvent(new CustomEvent('gemini-thinking-mode-changed', {
-            bubbles: true,
-            composed: true,
-            detail: { enabled: this.geminiThinkingModeEnabled }
-        }));
     }
 
     private _handleSummarizeClick() {
@@ -306,7 +323,7 @@ export class SidepanelComponent extends LitElement {
         this.dispatchEvent(new CustomEvent('send-chat-message', {
             bubbles: true,
             composed: true,
-            detail: { message: messageToSend, provider: this.selectedAiProvider, thinkingMode: this.geminiThinkingModeEnabled }
+            detail: { message: messageToSend, provider: this.selectedAiProvider, thinkingMode: this.thinkingModeEnabled }
         }));
         this.chatInputText = ''; // Clear input after sending
     }
@@ -314,46 +331,47 @@ export class SidepanelComponent extends LitElement {
     render() {
         return html`
             <div class="sidepanel-container">
+                ${this.warningMessage ? html`
+                    <div id="warning" class="warning-message">
+                        <iconify-icon
+                            icon="mdi:alert"
+                        ></iconify-icon>
+                        ${this.warningMessage}
+                    </div>
+                ` : ''}
                 <div id="responseArea">
                     ${this.responseContent.map(content => unsafeHTML(content))}
                 </div>
 
                 <footer>
-                    <div class="ai-selector-panel">
-                        <label for="aiProviderPanel">
-                            <iconify-icon icon="bx:bot" height="2.2em"></iconify-icon>
-                        </label>
-                        <select
-                            id="aiProviderPanel"
-                            name="aiProviderPanel"
-                            .value=${live(this.selectedAiProvider)}
-                            @change=${this._handleAiProviderChange}
-                        >
-                            <option value="default">(Default)</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="gemini">Gemini</option>
-                        </select>
-                        <div id="geminiThinkingModeArea" style="${this.showGeminiThinkingMode ? '' : 'display: none;'}">
-                            <input
-                                type="checkbox"
-                                id="geminiThinkingMode"
-                                name="geminiThinkingMode"
-                                .checked=${live(this.geminiThinkingModeEnabled)}
-                                @change=${this._handleGeminiThinkingModeChange}
+                    <div class="onerow">
+                        <div class="ai-selector-panel">
+                            <select
+                                id="aiProviderPanel"
+                                name="aiProviderPanel"
+                                .value=${this.selectedAiProvider}
+                                @change=${this._handleAiProviderChange}
                             >
-                            <label for="geminiThinkingMode">Enable Thinking</label>
+                            ${this.settings.getEnabledModels().map(model => html`
+                                <option value="${model}" ?selected=${model === this.settings.defaultAi}>${model}</option>
+                            `)}
+                            </select>
+                            <div id="thinkingModeArea" style="${this.showThinkingMode ? '' : 'display: none;'}">
+                                <input
+                                    type="checkbox"
+                                    id="thinkingMode"
+                                    name="thinkingMode"
+                                    .checked=${live(this.thinkingModeEnabled)}
+                                >
+                                <label for="thinkingMode">Thinking</label>
+                            </div>
+                            
                         </div>
-                    </div>
-
-                    <div class="button-row">
-                        <button id="summarizeBtn" @click=${this._handleSummarizeClick}>Summarize this page</button>
-                        <button id="clearBtn" @click=${this._handleClearClick}>
-                            <iconify-icon icon="material-symbols-light:mop-outline" height="2.2em"></iconify-icon>
-                        </button>
                         <button id="settings" @click=${this._handleSettingsClick}>
                             <iconify-icon icon="material-symbols:settings-outline-rounded" height="2.2em"></iconify-icon>
                         </button>
                     </div>
+                    <button id="summarizeBtn" @click=${this._handleSummarizeClick}>Summarize this page</button>
 
                     <div class="chat-area">
                         <textarea
@@ -368,9 +386,14 @@ export class SidepanelComponent extends LitElement {
                                 }
                             }}
                         ></textarea>
-                        <button id="sendChatBtn" @click=${this._handleSendChatClick}>
-                            <iconify-icon icon="tabler:arrow-up" height="2.2em"></iconify-icon>
-                        </button>
+                        <div class="onerow">
+                            <button id="clearBtn" @click=${this._handleClearClick}>
+                                <iconify-icon icon="material-symbols-light:mop-outline" height="2em"></iconify-icon>
+                            </button>
+                            <button id="sendChatBtn" @click=${this._handleSendChatClick}>
+                                <iconify-icon icon="tabler:arrow-up" height="2em"></iconify-icon>
+                            </button>
+                        </div>
                     </div>
                 </footer>
             </div>

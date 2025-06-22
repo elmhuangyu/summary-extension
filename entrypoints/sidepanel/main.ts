@@ -232,11 +232,17 @@ export class SidepanelComponent extends LitElement {
 
     private async loadSettings() {
         this.settings = await loadSettingsFromExtensionLocal();
+        // don't over-write if user have set the model they want to use.
         if (this.selectedAiProvider === '') {
             this.selectedAiProvider = this.settings.defaultAi;
             if (this.selectedAiProvider.includes('gemini-2.5')) {
                 this.showThinkingMode = true;
             }
+        }
+        if (this.settings.getEnabledModels().length === 0) {
+            this.warningMessage = warningMessageNoModel;
+        } else {
+            this.warningMessage = '';
         }
     }
 
@@ -399,3 +405,5 @@ export class SidepanelComponent extends LitElement {
         `;
     }
 }
+
+const warningMessageNoModel = 'No LLM model is configured, please go to option page to config.';

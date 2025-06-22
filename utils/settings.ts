@@ -69,15 +69,15 @@ export class AppSettings {
     public getEnabledModels(): string[] {
         const models: string[] = [];
 
-        if (this.openaiApiKey !== '') {
-            this.enabledOpenaiModels.forEach((model) => {
-                models.push('openai/' + model);
-            });
-        }
-
         if (this.geminiApiKey !== '') {
             this.enabledGeminiModels.forEach((model) => {
                 models.push('gemini/' + model);
+            });
+        }
+
+        if (this.openaiApiKey !== '') {
+            this.enabledOpenaiModels.forEach((model) => {
+                models.push('openai/' + model);
             });
         }
 

@@ -136,7 +136,7 @@ export class SidepanelComponent extends LitElement {
         }
         .ai-selector-panel select {
             flex-grow: 1;
-            padding: 8px;
+            padding: 2px;
             border: 1px solid #ccc;
             border-radius: 5px;
             background-color: white;
@@ -161,6 +161,7 @@ export class SidepanelComponent extends LitElement {
         #summarizeBtn {
             background-color: #28a745;
             color: white;
+            flex-grow: 1;
         }
         /* ChatGPT style buttons */
         #clearBtn, #settings, #sendChatBtn {
@@ -301,10 +302,7 @@ export class SidepanelComponent extends LitElement {
     }
 
     private _handleSettingsClick() {
-        this.dispatchEvent(new CustomEvent('open-settings', {
-            bubbles: true,
-            composed: true
-        }));
+        browser.runtime.openOptionsPage();
     }
 
     private _handleChatInputChange(event: Event) {
@@ -344,35 +342,39 @@ export class SidepanelComponent extends LitElement {
                 </div>
 
                 <footer>
-                    <div class="onerow">
-                        <div class="ai-selector-panel">
-                            <select
-                                id="aiProviderPanel"
-                                name="aiProviderPanel"
-                                .value=${this.selectedAiProvider}
-                                @change=${this._handleAiProviderChange}
+                    <div class="ai-selector-panel">
+                        <select
+                            id="aiProviderPanel"
+                            name="aiProviderPanel"
+                            .value=${this.selectedAiProvider}
+                            @change=${this._handleAiProviderChange}
+                        >
+                        ${this.settings.getEnabledModels().map(model => html`
+                            <option value="${model}" ?selected=${model === this.selectedAiProvider}>
+                                ${model.split('/')[1]}
+                            </option>
+                        `)}
+                        </select>
+                        <div id="thinkingModeArea" style="${this.showThinkingMode ? '' : 'display: none;'}">
+                            <input
+                                type="checkbox"
+                                id="thinkingMode"
+                                name="thinkingMode"
+                                .checked=${live(this.thinkingModeEnabled)}
                             >
-                            ${this.settings.getEnabledModels().map(model => html`
-                                <option value="${model}" ?selected=${model === this.settings.defaultAi}>${model}</option>
-                            `)}
-                            </select>
-                            <div id="thinkingModeArea" style="${this.showThinkingMode ? '' : 'display: none;'}">
-                                <input
-                                    type="checkbox"
-                                    id="thinkingMode"
-                                    name="thinkingMode"
-                                    .checked=${live(this.thinkingModeEnabled)}
-                                >
-                                <label for="thinkingMode">Thinking</label>
-                            </div>
-                            
+                            <label for="thinkingMode">Thinking</label>
                         </div>
+                    </div>
+                    
+                    <div class="onerow">
+                        <button id="summarizeBtn" @click=${this._handleSummarizeClick}>Summarize this page</button>
+                        <button id="clearBtn" @click=${this._handleClearClick}>
+                            <iconify-icon icon="material-symbols:mop-outline" height="2em"></iconify-icon>
+                        </button>
                         <button id="settings" @click=${this._handleSettingsClick}>
-                            <iconify-icon icon="material-symbols:settings-outline-rounded" height="2.2em"></iconify-icon>
+                            <iconify-icon icon="material-symbols:settings-outline-rounded" height="2em"></iconify-icon>
                         </button>
                     </div>
-                    <button id="summarizeBtn" @click=${this._handleSummarizeClick}>Summarize this page</button>
-
                     <div class="chat-area">
                         <textarea
                             id="chatInput"
@@ -387,9 +389,6 @@ export class SidepanelComponent extends LitElement {
                             }}
                         ></textarea>
                         <div class="onerow">
-                            <button id="clearBtn" @click=${this._handleClearClick}>
-                                <iconify-icon icon="material-symbols-light:mop-outline" height="2em"></iconify-icon>
-                            </button>
                             <button id="sendChatBtn" @click=${this._handleSendChatClick}>
                                 <iconify-icon icon="tabler:arrow-up" height="2em"></iconify-icon>
                             </button>

@@ -7,7 +7,7 @@ import '@/utils/settings';
 import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
-
+import { debugLog } from '@/utils/debug';
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
@@ -318,7 +318,7 @@ export class SidepanelComponent extends LitElement {
         }
     }
 
-    private _handleAiProviderChange(event: Event) {
+    private handleAiProviderChange(event: Event) {
         const selectElement = event.target as HTMLSelectElement;
         this.selectedAiProvider = selectElement.value;
         this.updateThinkingModeVisibility();
@@ -331,47 +331,40 @@ export class SidepanelComponent extends LitElement {
         }
     }
 
-    private _handleSummarizeClick() {
-        this.dispatchEvent(new CustomEvent('summarize-page', {
-            bubbles: true,
-            composed: true
-        }));
-        // Optional: append a "thinking..." message right after click
-        this.appendResponse('<div class="message-container ai-message">Summarizing...</div>');
+    private async handleSummarizeClick() {
+        // TODO
+        await this.getPageContent();
     }
 
-    private _handleClearClick() {
-        this.dispatchEvent(new CustomEvent('clear-response', {
-            bubbles: true,
-            composed: true
-        }));
-        // Reset responseContent to just the welcome message
-        this.responseContent = ['<p class="welcome-message">Welcome! Ask a question about the page or click Summarize.</p>'];
+    private async getPageContent(): Promise<string> {
+        const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "getPageContent" });
+        const md = response as string;
+
+        debugLog('summary-extension-sidepanel', md);
+        return md
     }
 
-    private _handleSettingsClick() {
+    private handleClearClick() {
+        // TODO
+    }
+
+    private handleSettingsClick() {
         browser.runtime.openOptionsPage();
     }
 
-    private _handleChatInputChange(event: Event) {
+    private handleChatInputChange(event: Event) {
         this.chatInputText = (event.target as HTMLTextAreaElement).value;
     }
 
-    private _handleSendChatClick() {
-        if (this.chatInputText.trim() === '') {
-            alert('Please enter a message to send.');
-            return;
+    private chatInputOnKeyboard(e: KeyboardEvent) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.handleSendChatClick();
         }
+    }
 
-        const messageToSend = this.chatInputText;
-        this.appendResponse(messageToSend, true); // Append user's message
-
-        this.dispatchEvent(new CustomEvent('send-chat-message', {
-            bubbles: true,
-            composed: true,
-            detail: { message: messageToSend, provider: this.selectedAiProvider, thinkingMode: this.thinkingModeEnabled }
-        }));
-        this.chatInputText = ''; // Clear input after sending
+    private handleSendChatClick() {
+        // TODO
     }
 
     render() {
@@ -388,7 +381,7 @@ export class SidepanelComponent extends LitElement {
                             id="aiProviderPanel"
                             name="aiProviderPanel"
                             .value=${this.selectedAiProvider}
-                            @change=${this._handleAiProviderChange}
+                            @change=${this.handleAiProviderChange}
                         >
                         ${this.settings.getEnabledModels().map(model => html`
                             <option value="${model}" ?selected=${model === this.selectedAiProvider}>
@@ -408,11 +401,11 @@ export class SidepanelComponent extends LitElement {
                     </div>
                     
                     <div class="onerow">
-                        <button id="summarizeBtn" @click=${this._handleSummarizeClick}>Summarize this page</button>
-                        <button id="clearBtn" @click=${this._handleClearClick}>
+                        <button id="summarizeBtn" @click=${this.handleSummarizeClick}>Summarize this page</button>
+                        <button id="clearBtn" @click=${this.handleClearClick}>
                             <iconify-icon icon="material-symbols:mop-outline" height="2em"></iconify-icon>
                         </button>
-                        <button id="settings" @click=${this._handleSettingsClick}>
+                        <button id="settings" @click=${this.handleSettingsClick}>
                             <iconify-icon icon="material-symbols:settings-outline-rounded" height="2em"></iconify-icon>
                         </button>
                     </div>
@@ -421,13 +414,8 @@ export class SidepanelComponent extends LitElement {
                             id="chatInput"
                             placeholder="Ask a question..."
                             .value=${live(this.chatInputText)}
-                            @input=${this._handleChatInputChange}
-                            @keydown=${(e: KeyboardEvent) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    this._handleSendChatClick();
-                                }
-                            }}
+                            @input=${this.handleChatInputChange}
+                            @keydown=${this.chatInputOnKeyboard}
                         ></textarea>
                         <div class="onerow">
                             <div id="tabInfo">
@@ -435,7 +423,7 @@ export class SidepanelComponent extends LitElement {
                                 ${this.currentTab.favicon ? html`<img id="favicon" src="${this.currentTab.favicon}">` : ''}
                                 <span>${this.currentTab.title}</span>
                             </div>
-                            <button id="sendChatBtn" @click=${this._handleSendChatClick}>
+                            <button id="sendChatBtn" @click=${this.handleSendChatClick}>
                                 <iconify-icon icon="tabler:arrow-up" height="2em"></iconify-icon>
                             </button>
                         </div>

@@ -1,6 +1,10 @@
 import { storage } from "#imports";
 
-let debugMode: boolean = await loadDebugModeFromStorage();
+let debugMode: boolean = false;
+
+loadDebugModeFromStorage().then(enable => {
+	debugMode = enable;
+});
 
 // watch if the value is changed.
 storage.watch<boolean>('local:debugMode', (newValue, oldVale) => {

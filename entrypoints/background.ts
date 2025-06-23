@@ -9,9 +9,3 @@ export default defineBackground(() => {
     }
   });
 });
-
-let sidePanelOpenWindows: Set<number> = new Set();
-
-async function isSidePanelOpen(windowId: number): Promise<boolean> {
-	return sidePanelOpenWindows.has(windowId);
-}

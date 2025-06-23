@@ -155,7 +155,7 @@ export class SettingsForm extends LitElement {
             return;
         }
 
-        const ai = new Model(Provider.OpenAI, '', '', apiKey);
+        const ai = new Model(Provider.OpenAI, '', '', apiKey, 0);
         if (await ai.check()) {
             button.loading = false;
             button.variant = 'success';
@@ -176,7 +176,7 @@ export class SettingsForm extends LitElement {
             return;
         }
 
-        const ai = new Model(Provider.Gemini, '', '', apiKey);
+        const ai = new Model(Provider.Gemini, '', '', apiKey, 0);
         if (await ai.check()) {
             button.loading = false;
             button.variant = 'success';
@@ -313,6 +313,9 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
     @query('#providerAccessToken')
     private providerAccessTokenInput!: HTMLInputElement;
 
+    @query('#providerMaxInputToken')
+    private providerMaxInputTokenInput!: HTMLInputElement;
+
     static styles = [
         commonCss,
         css`
@@ -331,7 +334,8 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             padding: 0 10px;
         }
         input[type="text"],
-        input[type="url"] {
+        input[type="url"],
+        input[type="number"] {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
@@ -376,10 +380,11 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
 
     private addProvider() {
         const newProviderName = this.providerNameInput.value.trim();
+        const newMaxInputToken = parseInt(this.providerMaxInputTokenInput.value.trim());
 
         // Basic validation
-        if (!newProviderName || !this.providerBaseUrlInput.value.trim() || !this.providerModelInput.value.trim() || !this.providerAccessTokenInput.value.trim()) {
-            alert('Please fill in all fields for the new provider.');
+        if (!newProviderName || !this.providerBaseUrlInput.value.trim() || !this.providerModelInput.value.trim() || !this.providerAccessTokenInput.value.trim() || isNaN(newMaxInputToken)) {
+            alert('Please fill in all fields for the new provider, including a valid number for Max Input Token.');
             return;
         }
         if (!this.providerBaseUrlInput.value.trim().startsWith('http://') && !this.providerBaseUrlInput.value.trim().startsWith('https://')) {
@@ -398,6 +403,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             baseUrl: this.providerBaseUrlInput.value.trim(),
             model: this.providerModelInput.value.trim(),
             accessToken: this.providerAccessTokenInput.value.trim(),
+            maxInputToken: newMaxInputToken,
         };
 
         this.providers = [...this.providers, newProvider];
@@ -408,6 +414,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
         this.providerBaseUrlInput.value = '';
         this.providerModelInput.value = '';
         this.providerAccessTokenInput.value = '';
+        this.providerMaxInputTokenInput.value = '';
     }
 
     private deleteProvider(nameToDelete: string) { // Now accepts 'name' instead of 'id'
@@ -423,15 +430,17 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
 
         if (this.providerBaseUrlInput.value === '' ||
             this.providerModelInput.value === '' ||
-            this.providerAccessTokenInput.value === '') {
+            this.providerAccessTokenInput.value === '' ||
+            this.providerMaxInputTokenInput.value === '') {
             return;
         }
 
         const baseUrl = this.providerBaseUrlInput.value;
         const model = this.providerModelInput.value;
         const apiKey = this.providerAccessTokenInput.value;
+        const maxInputToken = parseInt(this.providerMaxInputTokenInput.value);
 
-        const ai = new Model(Provider.OpenAICompatible, baseUrl, model, apiKey);
+        const ai = new Model(Provider.OpenAICompatible, baseUrl, model, apiKey, maxInputToken);
         if (await ai.check()) {
             button.loading = false;
             button.variant = 'success';
@@ -456,6 +465,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
                                     <strong>${provider.name}</strong> <!-- Displaying name prominently -->
                                     <p>URL: ${provider.baseUrl}</p>
                                     <p>Model: ${provider.model}</p>
+                                    <p>Max Input Token: ${provider.maxInputToken}</p>
                                 </div>
                                 <colored-button
                                     label="Delete"
@@ -506,6 +516,16 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
                             id="providerAccessToken"
                             name="providerAccessToken"
                             .value=${live(this.providerAccessTokenInput?.value || '')}
+                        >
+                    </div>
+                    <div>
+                        <label for="providerMaxInputToken">Max Input Token:</label>
+                        <input
+                            type="number"
+                            id="providerMaxInputToken"
+                            name="providerMaxInputToken"
+                            .value=${live(this.providerMaxInputTokenInput?.value || '')}
+                            placeholder="e.g., 4096"
                         >
                     </div>
                     <div class="oneline">

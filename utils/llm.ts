@@ -13,15 +13,18 @@ export class Model {
     baseUrl: string
     model: string
     apiKey: string
+    maxToken: number
 
     constructor(provider: Provider,
         baseUrl: string,
         model: string,
-        apiKey: string) {
+        apiKey: string,
+        maxToken: number) {
         this.provider = provider;
         this.baseUrl = baseUrl;
         this.model = model;
         this.apiKey = apiKey;
+        this.maxToken = maxToken;
     }
 
     async check(): Promise<boolean> {

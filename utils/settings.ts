@@ -14,6 +14,17 @@ export const allowedGeminiModels = [
     'gemini-2.0-flash',
 ];
 
+// model -> max input token in b.
+const maxInputTokens = new Map<string, number>([
+    ['gpt-4.1-nano',1024*1024],
+    ['gpt-4.1-mini',1024*1024],
+    ['gpt-4o-mini',128*1000],
+    ['gemini-2.5-flash-lite-preview-06-17',1024*1024],
+    ['gemini-2.5-flash',1024*1024],
+    ['gemini-2.5-pro',1024*1024],
+    ['gemini-2.0-flash',1024*1024],
+]);
+
 export const supportedLanguage = [
     "English",
     "繁体中文",
@@ -29,6 +40,7 @@ export interface OpenAiCompatibleProvider {
     baseUrl: string;
     model: string;
     accessToken: string;
+    maxInputToken: number;
 }
 
 export class AppSettings {
@@ -90,15 +102,17 @@ export class AppSettings {
 
     public getModel(name: string): Model | null {
         const parts = name.split('/');
+        const gotMaxInputToken = maxInputTokens.get(parts[1]);
+        const maxInputToken = gotMaxInputToken ? gotMaxInputToken : 0;
         if (parts[0] === 'openai') {
-            return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey);
+            return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey, maxInputToken);
         }
         if (parts[0] === 'gemini') {
-            return new Model(Provider.Gemini, '', parts[1], this.openaiApiKey);
+            return new Model(Provider.Gemini, '', parts[1], this.openaiApiKey, maxInputToken);
         }
         for (const p of this.openaiCompatibleProviders) {
             if (p.name == parts[1]) {
-                return new Model(Provider.OpenAICompatible, p.baseUrl, p.model, p.accessToken);
+                return new Model(Provider.OpenAICompatible, p.baseUrl, p.model, p.accessToken, p.maxInputToken);
             }
         }
         return null;

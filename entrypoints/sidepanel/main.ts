@@ -259,6 +259,7 @@ export class SidepanelComponent extends LitElement {
         // don't over-write if user have set the model they want to use.
         if (this.selectedAiProvider === '') {
             this.selectedAiProvider = this.settings.defaultAi;
+            // TODO: use better way to hint model support thinking.
             if (this.selectedAiProvider.includes('gemini-2.5')) {
                 this.showThinkingMode = true;
             }
@@ -340,7 +341,7 @@ export class SidepanelComponent extends LitElement {
         const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "getPageContent" });
         const md = response as string;
 
-        debugLog('summary-extension-sidepanel', md);
+        debugLog('summary-extension-sidepanel', 'size:', md.length, 'content:', md);
         return md
     }
 

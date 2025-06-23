@@ -4,6 +4,8 @@ import { live } from 'lit/directives/live.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import 'iconify-icon';
 import '@/utils/settings';
+import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
+
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
@@ -17,7 +19,7 @@ export class SidepanelComponent extends LitElement {
     @property({ type: Boolean })
     private thinkingModeEnabled: boolean = false;
 
-    @state()
+    @property({ type: Boolean })
     private showThinkingMode: boolean = false;
 
     @property({ type: String })
@@ -38,11 +40,16 @@ export class SidepanelComponent extends LitElement {
     @query('#responseArea')
     private responseAreaDiv!: HTMLDivElement; // Query for the scrollable div
 
-    @state()
+    @property({ type: Object })
     private settings: AppSettings = new AppSettings();
 
     private settingsUnwatch: () => void = () => { };
 
+    @property({ type: Object })
+    private currentTab: tabInfo = emptyTab;
+
+    @state()
+    private windowId: number = 0;
 
     static styles = css`
         :host {
@@ -156,6 +163,7 @@ export class SidepanelComponent extends LitElement {
             gap: 10px;
             flex-wrap: wrap;
             justify-content: space-between;
+            flex-direction: row;
         }
 
         #summarizeBtn {
@@ -163,7 +171,6 @@ export class SidepanelComponent extends LitElement {
             color: white;
             flex-grow: 1;
         }
-        /* ChatGPT style buttons */
         #clearBtn, #settings, #sendChatBtn {
             background-color: transparent;
             border: none;
@@ -208,6 +215,16 @@ export class SidepanelComponent extends LitElement {
             border: none; /* Ensure no border on focus */
             background-color: transparent; /* Ensure no background on focus */
         }
+        #tabInfo {
+            flex-grow: 1;
+            padding: 5px;
+            margin: 2px;
+        }
+        #favicon {
+            height: 1.1em;
+            width: 1.1em;
+            vertical-align: middle;
+        }
         /* The #sendChatBtn styles are now part of the combined rule above */
         iconify-icon {
             display: inline-block;
@@ -219,15 +236,28 @@ export class SidepanelComponent extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this.loadSettings();
-        this.settingsUnwatch = storage.watch<AppSettings>('local:settings', (newSettings, oldSettings) => {
-            this.loadSettings();
-            this.requestUpdate();
-        });
+        this.setupListeners();
     }
 
     disconnectedCallback() {
         this.settingsUnwatch();
         super.disconnectedCallback();
+    }
+
+    private setupListeners() {
+        this.settingsUnwatch = storage.watch<AppSettings>('local:settings', (newSettings, oldSettings) => {
+            this.loadSettings();
+            this.requestUpdate();
+        });
+
+        browser.tabs.onActivated.addListener(activeInfo => {
+            this.handleTabChange(activeInfo);
+        });
+        browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+			if (tab.status === 'complete') {
+				this.handleTabChange({ tabId, windowId: tab.windowId });
+			}
+		});
     }
 
     private async loadSettings() {
@@ -246,7 +276,22 @@ export class SidepanelComponent extends LitElement {
         }
     }
 
+    private async readWindowAndTabInfo() {
+        const windowId = await getCurrentWindowId();
+        if (windowId) {
+            this.windowId = windowId;
+        }
+        this.currentTab = await getCurrentActiveTab();
+    }
+
+    private async handleTabChange(activeInfo: { tabId: number; windowId?: number }) {
+        if (activeInfo.windowId && activeInfo.windowId === this.windowId) {
+            this.currentTab = await getCurrentActiveTab();
+        }
+    }
+    
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
+        this.readWindowAndTabInfo();
         this.updateThinkingModeVisibility();
         this.scrollToBottom(); // Scroll to bottom initially
     }
@@ -395,6 +440,11 @@ export class SidepanelComponent extends LitElement {
                             }}
                         ></textarea>
                         <div class="onerow">
+                            <div id="tabInfo">
+                                <span>Tab: </span>
+                                ${this.currentTab.favicon ? html`<img id="favicon" src="${this.currentTab.favicon}">` : ''}
+                                <span>${this.currentTab.title}</span>
+                            </div>
                             <button id="sendChatBtn" @click=${this._handleSendChatClick}>
                                 <iconify-icon icon="tabler:arrow-up" height="2em"></iconify-icon>
                             </button>

@@ -10,9 +10,10 @@ export default defineConfig({
         "description": "Use AI to summarize and chat about the current web page.",
         "permissions": [
             "activeTab",
-            "storage",
-            "sidePanel",
             "scripting",
+            "sidePanel",
+            "storage",
+            "tabs",
         ],
     }
 });

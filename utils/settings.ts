@@ -16,13 +16,13 @@ export const allowedGeminiModels = [
 
 // model -> max input token in b.
 const maxInputTokens = new Map<string, number>([
-    ['gpt-4.1-nano',1024*1024],
-    ['gpt-4.1-mini',1024*1024],
-    ['gpt-4o-mini',128*1000],
-    ['gemini-2.5-flash-lite-preview-06-17',1024*1024],
-    ['gemini-2.5-flash',1024*1024],
-    ['gemini-2.5-pro',1024*1024],
-    ['gemini-2.0-flash',1024*1024],
+    ['gpt-4.1-nano', 1024 * 1024],
+    ['gpt-4.1-mini', 1024 * 1024],
+    ['gpt-4o-mini', 128 * 1000],
+    ['gemini-2.5-flash-lite-preview-06-17', 1024 * 1024],
+    ['gemini-2.5-flash', 1024 * 1024],
+    ['gemini-2.5-pro', 1024 * 1024],
+    ['gemini-2.0-flash', 1024 * 1024],
 ]);
 
 export const supportedLanguage = [

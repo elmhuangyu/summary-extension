@@ -248,10 +248,10 @@ export class SidepanelComponent extends LitElement {
             this.handleTabChange(activeInfo);
         });
         browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-			if (tab.status === 'complete') {
-				this.handleTabChange({ tabId, windowId: tab.windowId });
-			}
-		});
+            if (tab.status === 'complete') {
+                this.handleTabChange({ tabId, windowId: tab.windowId });
+            }
+        });
     }
 
     private async loadSettings() {
@@ -287,7 +287,7 @@ export class SidepanelComponent extends LitElement {
     private updateInvalidTabWarning() {
         this.warningMessage.invalidTab = !this.currentTab.valid_url;
     }
-    
+
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
         this.readWindowAndTabInfo();
         this.updateThinkingModeVisibility();

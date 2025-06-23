@@ -155,7 +155,6 @@ export class SidepanelComponent extends LitElement {
         .onerow {
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
             justify-content: space-between;
             flex-direction: row;
         }
@@ -213,6 +212,16 @@ export class SidepanelComponent extends LitElement {
             flex-grow: 1;
             padding: 5px;
             margin: 2px;
+            display: flex; /* Make tabInfo a flex container to align its children */
+            min-width: 0; /* Allow flex item to shrink below its content size */
+            gap: 2px;
+        }
+        .tab-title-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1; /* Allow it to shrink */
+            min-width: 0; /* Important for flex items with overflow */
         }
         #favicon {
             height: 1.1em;
@@ -422,7 +431,7 @@ export class SidepanelComponent extends LitElement {
                             <div id="tabInfo">
                                 <span>Tab: </span>
                                 ${this.currentTab.favicon ? html`<img id="favicon" src="${this.currentTab.favicon}">` : ''}
-                                <span>${this.currentTab.title}</span>
+                                <span class="tab-title-text">${this.currentTab.title}</span>
                             </div>
                             <button id="sendChatBtn" @click=${this.handleSendChatClick}>
                                 <iconify-icon icon="tabler:arrow-up" height="2em"></iconify-icon>

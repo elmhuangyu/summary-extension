@@ -5,6 +5,8 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import 'iconify-icon';
 import '@/utils/settings';
 import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
+import './warning-message';
+import { WarningMessageComponent } from './warning-message';
 
 
 @customElement('sidepanel-component')
@@ -25,8 +27,8 @@ export class SidepanelComponent extends LitElement {
     @property({ type: String })
     private chatInputText: string = '';
 
-    @property({ type: String })
-    private warningMessage: string = '';
+    @query('#warningMessage')
+    private warningMessage!: WarningMessageComponent;
 
     @query('#aiProviderPanel')
     private aiProviderPanelSelect!: HTMLSelectElement;
@@ -86,14 +88,6 @@ export class SidepanelComponent extends LitElement {
             padding: 8px 12px;
             border-radius: 6px;
             word-wrap: break-word; /* Ensure long words break */
-        }
-
-        .warning-message {
-            color: red;
-            font-weight: bold;
-            text-align: left;
-            padding: 5px;
-            background: #FFFFC5;
         }
 
         /* Specific styles for welcome message if you keep it */
@@ -269,11 +263,8 @@ export class SidepanelComponent extends LitElement {
                 this.showThinkingMode = true;
             }
         }
-        if (this.settings.getEnabledModels().length === 0) {
-            this.warningMessage = warningMessageNoModel;
-        } else {
-            this.warningMessage = '';
-        }
+        this.warningMessage.noModel = this.settings.getEnabledModels().length === 0;
+        this.updateInvalidTabWarning();
     }
 
     private async readWindowAndTabInfo() {
@@ -282,12 +273,18 @@ export class SidepanelComponent extends LitElement {
             this.windowId = windowId;
         }
         this.currentTab = await getCurrentActiveTab();
+        this.updateInvalidTabWarning();
     }
 
     private async handleTabChange(activeInfo: { tabId: number; windowId?: number }) {
         if (activeInfo.windowId && activeInfo.windowId === this.windowId) {
             this.currentTab = await getCurrentActiveTab();
+            this.updateInvalidTabWarning();
         }
+    }
+
+    private updateInvalidTabWarning() {
+        this.warningMessage.invalidTab = !this.currentTab.valid_url;
     }
     
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
@@ -380,14 +377,7 @@ export class SidepanelComponent extends LitElement {
     render() {
         return html`
             <div class="sidepanel-container">
-                ${this.warningMessage ? html`
-                    <div id="warning" class="warning-message">
-                        <iconify-icon
-                            icon="mdi:alert"
-                        ></iconify-icon>
-                        ${this.warningMessage}
-                    </div>
-                ` : ''}
+                <warning-message-component id="warningMessage"></warning-message-component>
                 <div id="responseArea">
                     ${this.responseContent.map(content => unsafeHTML(content))}
                 </div>
@@ -455,5 +445,3 @@ export class SidepanelComponent extends LitElement {
         `;
     }
 }
-
-const warningMessageNoModel = 'No LLM model is configured, please go to option page to config.';

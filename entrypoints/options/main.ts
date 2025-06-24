@@ -58,7 +58,7 @@ const commonCss = css`
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 4px;
-        width: 70%;
+        width: 50%;
         box-sizing: border-box;
     }
 `;

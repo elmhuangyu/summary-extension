@@ -1,7 +1,7 @@
 import { GoogleGenAI, GenerateContentConfig } from '@google/genai';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import { encoding_for_model } from 'tiktoken';
+import { encode } from 'gpt-tokenizer';
 
 export enum Provider {
     OpenAI,
@@ -63,8 +63,7 @@ export class Model {
 
     async chatWithContent(prompt: string, cuttableContent: string, contentType: string, systemPrompt: string, thinking: boolean): Promise<string> {
         // each model use their own encoding, this counter is just a guess.
-        const enc = encoding_for_model("gpt-4.1-nano");
-        const encoded = enc.encode(prompt + cuttableContent);
+        const encoded = encode(prompt + cuttableContent);
         // leave room for format, systemPrompt & over optimistic guess.
         const maxInputToken = this.maxToken - 1024 * 2;
         // need to cut the content

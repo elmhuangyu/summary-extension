@@ -25,15 +25,13 @@
     "@google/genai": "^1.5.1",
     "@wxt-dev/webextension-polyfill": "^1.0.0",
     "defuddle": "^0.6.4",
+    "gpt-tokenizer": "^3.0.1",
     "iconify-icon": "^3.0.0",
     "lit": "^3.3.0",
     "marked": "^15.0.12",
     "mathml-to-latex": "^1.5.0",
     "mime": "^4.0.7",
     "openai": "^5.5.1",
-    "tiktoken": "^1.0.21",
-    "turndown": "^7.2.0",
-    "vite-plugin-top-level-await": "^1.5.0",
-    "vite-plugin-wasm": "^3.4.1"
+    "turndown": "^7.2.0"
   }
 }

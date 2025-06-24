@@ -293,6 +293,7 @@ export class SidepanelComponent extends LitElement {
             this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
             this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
@@ -303,8 +304,6 @@ export class SidepanelComponent extends LitElement {
     private async getPageContent(): Promise<string> {
         const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "getPageContent" });
         const md = response as string;
-
-        debugLog('summary-extension-sidepanel', 'size:', md.length, 'content:', md);
         return md
     }
 
@@ -348,6 +347,7 @@ export class SidepanelComponent extends LitElement {
 
             this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
         } finally {
             this.responseAreaComponent.toggleLoading(false);

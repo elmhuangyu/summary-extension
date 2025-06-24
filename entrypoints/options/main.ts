@@ -124,6 +124,7 @@ export class SettingsForm extends LitElement {
     private handleSubmit(event: Event) {
         const formData = new FormData(this.settingsForm);
         const newSettings = new AppSettings();
+        newSettings.openaiCompatibleProviders = this.settings.openaiCompatibleProviders;
         newSettings.enabledOpenaiModels = [];
         newSettings.enabledGeminiModels = [];
 

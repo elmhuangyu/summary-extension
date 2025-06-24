@@ -10,6 +10,10 @@ export class WarningMessageComponent extends LitElement {
     @property({ type: Boolean })
     invalidTab: boolean = false;
 
+    public hasWarning(): boolean {
+        return this.noModel || this.invalidTab;
+    }
+
     static styles = css`
         .warning-message {
             color: red;

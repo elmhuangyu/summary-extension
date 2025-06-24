@@ -50,6 +50,9 @@ export class SidepanelComponent extends LitElement {
     @state()
     private windowId: number = 0;
 
+    @state()
+    private isChatRequestRunning: boolean = false;
+
     static styles = css`
         :host {
             display: flex;
@@ -271,22 +274,28 @@ export class SidepanelComponent extends LitElement {
     }
 
     private async handleSummarizeClick() {
-        // TODO check if any error, if error just do nothing and return
-        // TODO check if any ai chat request is running, if yes just do nothing and return
-        const content = await this.getPageContent();
-        const model = this.settings.getModel(this.selectedAiProvider);
-        if (!model) {
+        if (this.warningMessage.hasWarning()) {
             return;
         }
-        const prompt = 'Summarize the follow content';
-
-        this.responseAreaComponent.addMessage('user', 'Summarize this page'); // Add user message for summarize action
-        this.responseAreaComponent.toggleLoading(true);
+        if (this.isChatRequestRunning) {
+            return;
+        }
+        this.isChatRequestRunning = true;
         try {
+            const content = await this.getPageContent();
+            const model = this.settings.getModel(this.selectedAiProvider);
+            if (!model) {
+                return;
+            }
+            const prompt = 'Summarize the follow content';
+
+            this.responseAreaComponent.addMessage('user', 'Summarize this page'); // Add user message for summarize action
+            this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             this.responseAreaComponent.addMessage('ai', resp);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
+            this.isChatRequestRunning = false;
         }
     }
 
@@ -318,25 +327,30 @@ export class SidepanelComponent extends LitElement {
     }
 
     private async handleSendChatClick() {
-        // TODO check if any error, if error just do nothing and return
-        // TODO check if any ai chat request is running, if yes just do nothing and return
-        // TODO if check box is empty just do nothing
-        const content = await this.getPageContent();
-        const model = this.settings.getModel(this.selectedAiProvider);
-        if (!model) {
+        if (this.warningMessage.hasWarning()) {
             return;
         }
-        const prompt = 'Summarize the follow content';
-
-        this.responseAreaComponent.addMessage('user', this.chatInputText);
-        this.chatInputText = ''; // Clear input after sending
-
-        this.responseAreaComponent.toggleLoading(true);
+        if (this.isChatRequestRunning || this.chatInputText.trim() === '') {
+            return;
+        }
+        this.isChatRequestRunning = true;
         try {
+            const content = await this.getPageContent();
+            const model = this.settings.getModel(this.selectedAiProvider);
+            if (!model) {
+                return;
+            }
+            const prompt = this.chatInputText; // Use chatInputText as the prompt
+
+            this.responseAreaComponent.addMessage('user', this.chatInputText);
+            this.chatInputText = ''; // Clear input after sending
+
+            this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             this.responseAreaComponent.addMessage('ai', resp);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
+            this.isChatRequestRunning = false;
         }
     }
 

@@ -108,7 +108,7 @@ export class AppSettings {
             return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey, maxInputToken);
         }
         if (parts[0] === 'gemini') {
-            return new Model(Provider.Gemini, '', parts[1], this.openaiApiKey, maxInputToken);
+            return new Model(Provider.Gemini, '', parts[1], this.geminiApiKey, maxInputToken);
         }
         for (const p of this.openaiCompatibleProviders) {
             if (p.name == parts[1]) {
@@ -116,6 +116,10 @@ export class AppSettings {
             }
         }
         return null;
+    }
+
+    public getSystemPrompt(): string {
+        return `Always response in language ${this.language}`;
     }
 }
 

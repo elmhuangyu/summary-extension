@@ -343,7 +343,15 @@ export class SidepanelComponent extends LitElement {
 
     private async handleSummarizeClick() {
         // TODO
-        await this.getPageContent();
+        const content = await this.getPageContent();
+        const model = this.settings.getModel(this.selectedAiProvider);
+        if (!model) {
+            return;
+        }
+        const prompt = 'Summarize the follow content';
+
+        const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+        console.log(resp);
     }
 
     private async getPageContent(): Promise<string> {
@@ -353,6 +361,9 @@ export class SidepanelComponent extends LitElement {
         debugLog('summary-extension-sidepanel', 'size:', md.length, 'content:', md);
         return md
     }
+
+    
+
 
     private handleClearClick() {
         // TODO

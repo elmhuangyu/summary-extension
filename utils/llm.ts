@@ -1,6 +1,7 @@
 import { GoogleGenAI, GenerateContentConfig } from '@google/genai';
 import { OpenAI } from 'openai';
 import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { encoding_for_model } from 'tiktoken';
 
 export enum Provider {
     OpenAI,
@@ -60,14 +61,38 @@ export class Model {
         }
     }
 
-    async chat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string | null> {
+    async chatWithContent(prompt: string, cuttableContent: string, contentType: string, systemPrompt: string, thinking: boolean): Promise<string> {
+        // each model use their own encoding, this counter is just a guess.
+        const enc = encoding_for_model("gpt-4.1-nano");
+        const encoded = enc.encode(prompt + cuttableContent);
+        // leave room for format, systemPrompt & over optimistic guess.
+        const maxInputToken = this.maxToken - 1024 * 2;
+        // need to cut the content
+        if (encoded.length > maxInputToken) {
+            const percentage = maxInputToken / encoded.length;
+            cuttableContent = cuttableContent.substring(0, percentage * cuttableContent.length);
+        }
+
+        // build the prompt
+        const p = `${prompt}
+
+
+\`\`\`${contentType}
+${cuttableContent}
+\`\`\`
+`;
+
+        return this.chat(p, systemPrompt, thinking);
+    }
+
+    async chat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string> {
         if (this.provider == Provider.Gemini) {
             return this.geminiChat(prompt, systemPrompt, thinking);
         }
         return this.openaiChat(prompt, systemPrompt);
     }
 
-    private async openaiChat(prompt: string, systemPrompt: string): Promise<string | null> {
+    private async openaiChat(prompt: string, systemPrompt: string): Promise<string> {
         let baseUrl = 'https://api.openai.com/v1';
         if (this.provider === Provider.OpenAICompatible) {
             baseUrl = this.baseUrl;
@@ -102,10 +127,11 @@ export class Model {
             model: this.model,
             messages: messages,
         });
-        return completion.choices[0].message.content;
+        const resp = completion.choices[0].message.content;
+        return resp ? resp : '';
     }
 
-    private async geminiChat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string | null> {
+    private async geminiChat(prompt: string, systemPrompt: string, thinking: boolean): Promise<string> {
         const ai = new GoogleGenAI({ apiKey: this.apiKey });
         const thinkingBudget = thinking ? -1 : 0;
 
@@ -138,6 +164,6 @@ export class Model {
         if (!!text) {
             return text;
         }
-        return null;
+        return '';
     }
 }

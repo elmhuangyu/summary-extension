@@ -10,8 +10,11 @@ export class WarningMessageComponent extends LitElement {
     @property({ type: Boolean })
     invalidTab: boolean = false;
 
+    @property({ type: Boolean })
+    pingFailed: boolean = false;
+
     public hasWarning(): boolean {
-        return this.noModel || this.invalidTab;
+        return this.noModel || this.invalidTab || this.pingFailed;
     }
 
     static styles = css`
@@ -38,6 +41,9 @@ export class WarningMessageComponent extends LitElement {
         }
         if (this.invalidTab) {
             messages.push('This tab is invalid for summarization or chat.');
+        }
+        if (this.pingFailed) {
+            messages.push('Failed to connect to the current tab, refresh may fix.');
         }
 
         if (messages.length === 0) {

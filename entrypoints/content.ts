@@ -10,6 +10,8 @@ export default defineContentScript({
         const currentUrl = document.URL.replace(/#:~:text=[^&]+(&|$)/, '');
         const markdown = createMarkdownContent(resp.content, currentUrl);
         sendResponse(markdown);
+      } else if (request.action === 'ping') {
+        sendResponse('pong');
       }
     });
   },

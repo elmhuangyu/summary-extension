@@ -97,6 +97,7 @@ export class ResponseAreaComponent extends LitElement {
         .ai-message {
             background-color: #e0ffe6;
             align-self: flex-start;
+            max-width: 90%;
         }
 
         /* Markdown specific styles */

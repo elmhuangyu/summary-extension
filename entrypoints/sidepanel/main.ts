@@ -232,7 +232,6 @@ export class SidepanelComponent extends LitElement {
             }
         }
         this.warningMessage.noModel = this.settings.getEnabledModels().length === 0;
-        this.updateInvalidTabWarning();
     }
 
     private async readWindowAndTabInfo() {
@@ -242,12 +241,14 @@ export class SidepanelComponent extends LitElement {
         }
         this.currentTab = await getCurrentActiveTab();
         this.updateInvalidTabWarning();
+        this.pingContentScript();
     }
 
     private async handleTabChange(activeInfo: { tabId: number; windowId?: number }) {
         if (activeInfo.windowId && activeInfo.windowId === this.windowId) {
             this.currentTab = await getCurrentActiveTab();
             this.updateInvalidTabWarning();
+            this.pingContentScript();
         }
     }
 
@@ -351,6 +352,15 @@ export class SidepanelComponent extends LitElement {
         } finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;
+        }
+    }
+
+    private async pingContentScript() {
+        try {
+            const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "ping" });
+            this.warningMessage.pingFailed = false; // Reset on successful ping
+        } catch (error) {
+            this.warningMessage.pingFailed = true; // Set warning on failed ping
         }
     }
 

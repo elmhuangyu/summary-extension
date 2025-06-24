@@ -58,10 +58,13 @@ const commonCss = css`
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 4px;
-        width: 100%;
+        width: 70%;
         box-sizing: border-box;
     }
 `;
+
+const openaiApiKeyUrl = 'https://platform.openai.com/settings/organization/api-keys';
+const geminiApiKeyUrl = 'https://aistudio.google.com/apikey';
 
 @customElement('settings-form')
 export class SettingsForm extends LitElement {
@@ -167,6 +170,14 @@ export class SettingsForm extends LitElement {
         button.label = 'Failed';
     }
 
+    private openOpenAiApiKeyPage() {
+        window.open(openaiApiKeyUrl, '_blank');
+    }
+
+    private openGeminiApiKeyPage() {
+        window.open(geminiApiKeyUrl, '_blank');
+    }
+
     private async testGeminiConnection(event: Event) {
         const button = event.target as ColoredButton;
         button.loading = true;
@@ -238,6 +249,7 @@ export class SettingsForm extends LitElement {
                             name="openaiApiKey"
                             .value=${this.settings.openaiApiKey}
                         >
+                        <colored-button label="Get API Key" @click=${this.openOpenAiApiKeyPage}></colored-button>
                         <colored-button label="Test" @click=${this.testOpenAiConnection}></colored-button>
                     </div>
                 </div>
@@ -269,6 +281,7 @@ export class SettingsForm extends LitElement {
                             name="geminiApiKey"
                             .value=${this.settings.geminiApiKey}
                         >
+                        <colored-button label="Get API Key" @click=${this.openGeminiApiKeyPage}></colored-button>
                         <colored-button label="Test" @click=${this.testGeminiConnection}></colored-button>
                     </div>
                 </div>

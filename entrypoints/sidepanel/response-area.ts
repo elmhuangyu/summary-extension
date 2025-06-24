@@ -2,6 +2,7 @@ import { LitElement, html, css, PropertyValueMap } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { marked } from 'marked';
+import DOMPurify from "isomorphic-dompurify";
 
 interface Message {
     type: 'user' | 'ai';
@@ -198,7 +199,7 @@ export class ResponseAreaComponent extends LitElement {
                     ? html`<p class="welcome-message-container">Welcome! Ask a question about the page or click Summarize.</p>`
                     : this.responseContent.map(msg => {
                         const messageClass = msg.type === 'user' ? 'user-message' : 'ai-message';
-                        const content = msg.type === 'ai' ? unsafeHTML(marked.parse(msg.content, { async: false }) as string) : msg.content;
+                        const content = msg.type === 'ai' ? unsafeHTML(DOMPurify.sanitize(marked.parse(msg.content, { async: false }) as string)) : msg.content;
                         return html`
                             <div class="message-container ${messageClass}">
                                 ${msg.tabTitle && msg.tabFavicon ? html`

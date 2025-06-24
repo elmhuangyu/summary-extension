@@ -1,20 +1,17 @@
 import { LitElement, html, css, PropertyValueMap } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import 'iconify-icon';
 import '@/utils/settings';
 import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
+import './response-area'; // Import the new component
+import { ResponseAreaComponent } from './response-area'; // Import the class
 import { debugLog } from '@/utils/debug';
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
-    // responseContent is now a list of strings
-    @property({ type: Array })
-    private responseContent: string[] = ['<p class="welcome-message">Welcome! Ask a question about the page or click Summarize.</p>'];
-
     @property({ type: String })
     private selectedAiProvider: string = '';
 
@@ -39,8 +36,8 @@ export class SidepanelComponent extends LitElement {
     @query('#chatInput')
     private chatInputTextarea!: HTMLTextAreaElement;
 
-    @query('#responseArea')
-    private responseAreaDiv!: HTMLDivElement; // Query for the scrollable div
+    @query('#responseAreaComponent') // Query for the new component
+    private responseAreaComponent!: ResponseAreaComponent;
 
     @property({ type: Object })
     private settings: AppSettings = new AppSettings();
@@ -70,48 +67,6 @@ export class SidepanelComponent extends LitElement {
             height: 100%;
             padding: 8px;
             box-sizing: border-box;
-        }
-
-        #responseArea {
-            overflow-y: auto;
-            padding: 5px;
-            margin-bottom: 15px;
-            color: #333;
-            display: flex; /* Use flexbox for messages */
-            flex-direction: column; /* Stack messages vertically */
-            gap: 10px; /* Space between messages */
-            min-height: 0; /* Allow flex item to shrink */
-            flex-grow: 1;
-        }
-
-        .message-container {
-            padding: 8px 12px;
-            border-radius: 6px;
-            word-wrap: break-word; /* Ensure long words break */
-        }
-
-        /* Specific styles for welcome message if you keep it */
-        .welcome-message-container {
-            font-style: italic;
-            color: #666;
-            text-align: center;
-            background-color: transparent; /* Welcome message shouldn't have a background */
-            padding: 0;
-            margin: 0;
-        }
-
-        /* Styling for different message types if needed later (e.g., user vs. AI) */
-        .user-message {
-            background-color: #e6f7ff; /* Light blue */
-            align-self: flex-end; /* Align to the right */
-            margin-left: auto; /* Push to right */
-            max-width: 85%; /* Don't take full width */
-        }
-        .ai-message {
-            background-color: #e0ffe6; /* Light green */
-            align-self: flex-start; /* Align to the left */
-            margin-right: auto; /* Push to left */
-            max-width: 85%;
         }
 
         footer {
@@ -300,32 +255,6 @@ export class SidepanelComponent extends LitElement {
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
         this.readWindowAndTabInfo();
         this.updateThinkingModeVisibility();
-        this.scrollToBottom(); // Scroll to bottom initially
-    }
-
-    // Called after every update, useful for keeping scroll position correct
-    protected updated(changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
-        if (changedProperties.has('responseContent')) {
-            this.scrollToBottom(); // Scroll to bottom when new content is added
-        }
-    }
-
-    // Public method to append new content to the response area
-    public appendResponse(message: string, isUserMessage: boolean = false) {
-        // You can add logic here to determine if it's a user or AI message
-        // For simplicity, just append with basic styling for now.
-        // You might pass a 'type' or 'sender' parameter for more complex rendering.
-        const messageClass = isUserMessage ? 'user-message' : 'ai-message';
-        const formattedMessage = `<div class="message-container ${messageClass}">${message}</div>`;
-
-        this.responseContent = [...this.responseContent, formattedMessage];
-        // The updated() lifecycle hook will handle scrolling after this state update.
-    }
-
-    private scrollToBottom() {
-        if (this.responseAreaDiv) {
-            this.responseAreaDiv.scrollTop = this.responseAreaDiv.scrollHeight;
-        }
     }
 
     private handleAiProviderChange(event: Event) {
@@ -351,10 +280,14 @@ export class SidepanelComponent extends LitElement {
         }
         const prompt = 'Summarize the follow content';
 
-        const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
-        
-        // TODO properly show the message
-        console.log(resp);
+        this.responseAreaComponent.addMessage('user', 'Summarize this page'); // Add user message for summarize action
+        this.responseAreaComponent.toggleLoading(true);
+        try {
+            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            this.responseAreaComponent.addMessage('ai', resp);
+        } finally {
+            this.responseAreaComponent.toggleLoading(false);
+        }
     }
 
     private async getPageContent(): Promise<string> {
@@ -366,7 +299,7 @@ export class SidepanelComponent extends LitElement {
     }
 
     private handleClearClick() {
-        // TODO
+        this.responseAreaComponent.clear();
     }
 
     private handleSettingsClick() {
@@ -395,19 +328,23 @@ export class SidepanelComponent extends LitElement {
         }
         const prompt = 'Summarize the follow content';
 
-        const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
-        
-        // TODO properly show the message
-        console.log(resp);
+        this.responseAreaComponent.addMessage('user', this.chatInputText);
+        this.chatInputText = ''; // Clear input after sending
+
+        this.responseAreaComponent.toggleLoading(true);
+        try {
+            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            this.responseAreaComponent.addMessage('ai', resp);
+        } finally {
+            this.responseAreaComponent.toggleLoading(false);
+        }
     }
 
     render() {
         return html`
             <div class="sidepanel-container">
                 <warning-message-component id="warningMessage"></warning-message-component>
-                <div id="responseArea">
-                    ${this.responseContent.map(content => unsafeHTML(content))}
-                </div>
+                <response-area-component id="responseAreaComponent"></response-area-component>
 
                 <footer>
                     <div class="ai-selector-panel">

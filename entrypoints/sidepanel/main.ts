@@ -342,7 +342,8 @@ export class SidepanelComponent extends LitElement {
     }
 
     private async handleSummarizeClick() {
-        // TODO
+        // TODO check if any error, if error just do nothing and return
+        // TODO check if any ai chat request is running, if yes just do nothing and return
         const content = await this.getPageContent();
         const model = this.settings.getModel(this.selectedAiProvider);
         if (!model) {
@@ -351,6 +352,8 @@ export class SidepanelComponent extends LitElement {
         const prompt = 'Summarize the follow content';
 
         const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+        
+        // TODO properly show the message
         console.log(resp);
     }
 
@@ -361,9 +364,6 @@ export class SidepanelComponent extends LitElement {
         debugLog('summary-extension-sidepanel', 'size:', md.length, 'content:', md);
         return md
     }
-
-    
-
 
     private handleClearClick() {
         // TODO
@@ -384,8 +384,21 @@ export class SidepanelComponent extends LitElement {
         }
     }
 
-    private handleSendChatClick() {
-        // TODO
+    private async handleSendChatClick() {
+        // TODO check if any error, if error just do nothing and return
+        // TODO check if any ai chat request is running, if yes just do nothing and return
+        // TODO if check box is empty just do nothing
+        const content = await this.getPageContent();
+        const model = this.settings.getModel(this.selectedAiProvider);
+        if (!model) {
+            return;
+        }
+        const prompt = 'Summarize the follow content';
+
+        const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+        
+        // TODO properly show the message
+        console.log(resp);
     }
 
     render() {

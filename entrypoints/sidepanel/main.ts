@@ -289,10 +289,10 @@ export class SidepanelComponent extends LitElement {
             }
             const prompt = 'Summarize the follow content';
 
-            this.responseAreaComponent.addMessage('user', 'Summarize this page'); // Add user message for summarize action
+            this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
             this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
-            this.responseAreaComponent.addMessage('ai', resp);
+            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;
@@ -340,14 +340,14 @@ export class SidepanelComponent extends LitElement {
             if (!model) {
                 return;
             }
-            const prompt = this.chatInputText; // Use chatInputText as the prompt
+            const prompt = this.chatInputText;
 
-            this.responseAreaComponent.addMessage('user', this.chatInputText);
+            this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.chatInputText = ''; // Clear input after sending
 
             this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
-            this.responseAreaComponent.addMessage('ai', resp);
+            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;

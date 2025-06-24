@@ -6,6 +6,8 @@ import { marked } from 'marked';
 interface Message {
     type: 'user' | 'ai';
     content: string;
+    tabTitle?: string;
+    tabFavicon?: string;
 }
 
 @customElement('response-area-component')
@@ -42,6 +44,35 @@ export class ResponseAreaComponent extends LitElement {
             flex-grow: 1;
         }
 
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .tab-info-header {
+            display: flex;
+            gap: 5px;
+            padding: 5px 0;
+            font-size: 0.9em;
+            color: #666;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-info-header img {
+            height: 1.1em;
+            width: 1.1em;
+            vertical-align: middle;
+        }
+
+        .tab-title-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
         .message-container {
             padding: 8px 12px;
             border-radius: 6px;
@@ -67,6 +98,7 @@ export class ResponseAreaComponent extends LitElement {
             background-color: #e0ffe6;
             align-self: flex-start;
             margin-right: auto;
+            max-width: 90%;
         }
 
         /* Markdown specific styles */
@@ -138,8 +170,8 @@ export class ResponseAreaComponent extends LitElement {
         }
     }
 
-    public addMessage(type: 'user' | 'ai', message: string) {
-        this.responseContent = [...this.responseContent, { type, content: message }];
+    public addMessage(type: 'user' | 'ai', message: string, tabTitle?: string, tabFavicon?: string) {
+        this.responseContent = [...this.responseContent, { type, content: message, tabTitle, tabFavicon }];
     }
 
     public clear() {
@@ -168,7 +200,17 @@ export class ResponseAreaComponent extends LitElement {
                     : this.responseContent.map(msg => {
                         const messageClass = msg.type === 'user' ? 'user-message' : 'ai-message';
                         const content = msg.type === 'ai' ? unsafeHTML(marked.parse(msg.content, { async: false }) as string) : msg.content;
-                        return html`<div class="message-container ${messageClass}">${content}</div>`;
+                        return html`
+                            <div class="message-container ${messageClass}">
+                                ${msg.tabTitle && msg.tabFavicon ? html`
+                                    <div class="tab-info-header">
+                                        <img src="${msg.tabFavicon}">
+                                        <span class="tab-title-text">${msg.tabTitle}</span>
+                                    </div>
+                                ` : ''}
+                                ${content}
+                            </div>
+                        `;
                     })}
                 ${this.isLoading ? html`<div class="loader-container"><div class="loader"></div></div>` : ''}
             </div>

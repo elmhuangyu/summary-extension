@@ -1,5 +1,7 @@
 import { LitElement, html, css, PropertyValueMap } from 'lit';
 import { customElement, property, query } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { marked } from 'marked';
 
 interface Message {
     type: 'user' | 'ai';
@@ -65,7 +67,37 @@ export class ResponseAreaComponent extends LitElement {
             background-color: #e0ffe6;
             align-self: flex-start;
             margin-right: auto;
-            max-width: 85%;
+        }
+
+        /* Markdown specific styles */
+        .ai-message pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .ai-message code {
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            background-color: #e0e0e0;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .ai-message p {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .ai-message ul, .ai-message ol {
+            margin-top: 0;
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+
+        .ai-message h1, .ai-message h2, .ai-message h3, .ai-message h4, .ai-message h5, .ai-message h6 {
+            margin-top: 15px;
+            margin-bottom: 10px;
         }
 
         .loader-container {
@@ -135,7 +167,8 @@ export class ResponseAreaComponent extends LitElement {
                     ? html`<p class="welcome-message-container">Welcome! Ask a question about the page or click Summarize.</p>`
                     : this.responseContent.map(msg => {
                         const messageClass = msg.type === 'user' ? 'user-message' : 'ai-message';
-                        return html`<div class="message-container ${messageClass}">${msg.content}</div>`;
+                        const content = msg.type === 'ai' ? unsafeHTML(marked.parse(msg.content, { async: false }) as string) : msg.content;
+                        return html`<div class="message-container ${messageClass}">${content}</div>`;
                     })}
                 ${this.isLoading ? html`<div class="loader-container"><div class="loader"></div></div>` : ''}
             </div>

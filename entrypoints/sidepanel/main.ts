@@ -6,11 +6,10 @@ import '@/utils/settings';
 import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
-import './response-area'; // Import the new component
-import { ResponseAreaComponent } from './response-area'; // Import the class
+import './response-area';
+import { ResponseAreaComponent } from './response-area';
 import { debugLog } from '@/utils/debug';
 import { AppSettings } from '@/utils/settings';
-import { Model } from '@/utils/llm';
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
@@ -29,16 +28,7 @@ export class SidepanelComponent extends LitElement {
     @query('#warningMessage')
     private warningMessage!: WarningMessageComponent;
 
-    @query('#aiProviderPanel')
-    private aiProviderPanelSelect!: HTMLSelectElement;
-
-    @query('#thinkingMode')
-    private geminiThinkingModeCheckbox!: HTMLInputElement;
-
-    @query('#chatInput')
-    private chatInputTextarea!: HTMLTextAreaElement;
-
-    @query('#responseAreaComponent') // Query for the new component
+    @query('#responseAreaComponent')
     private responseAreaComponent!: ResponseAreaComponent;
 
     @property({ type: Object })
@@ -281,7 +271,8 @@ export class SidepanelComponent extends LitElement {
 
     private updatePrivateSiteWarning() {
         const model = this.settings.getModel(this.selectedAiProvider);
-        const isPrivateSite = this.settings.privateSites.some(site => this.currentTab.url.includes(site));
+        const currentUrlHost = new URL(this.currentTab.url).hostname;
+        const isPrivateSite = this.settings.privateSites.some(site => currentUrlHost === site);
         this.warningMessage.notPrivateAiProviderOnPrivateSite = isPrivateSite && (!model || !model.isPrivate);
     }
 

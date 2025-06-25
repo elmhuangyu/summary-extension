@@ -294,7 +294,7 @@ export class SidepanelComponent extends LitElement {
             this.responseAreaComponent.toggleLoading(true);
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             debugLog('summary-extension-sidepanel', 'ai resp:', resp);
-            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
+            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon, this.selectedAiProvider);
         } finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;

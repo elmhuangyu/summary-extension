@@ -9,6 +9,7 @@ interface Message {
     content: string;
     tabTitle?: string;
     tabFavicon?: string;
+    aiModelName?: string;
 }
 
 @customElement('response-area-component')
@@ -101,6 +102,14 @@ export class ResponseAreaComponent extends LitElement {
             max-width: 90%;
         }
 
+        .ai-model-header {
+            font-size: 0.85em;
+            color: #555;
+            align-self: flex-start; /* Align with the AI message box */
+            max-width: 90%; /* Match the width of the AI message box */
+            padding-left: 8px; /* Align with the padding of the message container */
+        }
+
         /* Markdown specific styles */
         .ai-message pre {
             background-color: #eee;
@@ -170,8 +179,8 @@ export class ResponseAreaComponent extends LitElement {
         }
     }
 
-    public addMessage(type: 'user' | 'ai', message: string, tabTitle?: string, tabFavicon?: string) {
-        this.responseContent = [...this.responseContent, { type, content: message, tabTitle, tabFavicon }];
+    public addMessage(type: 'user' | 'ai', message: string, tabTitle?: string, tabFavicon?: string, aiModelName?: string) {
+        this.responseContent = [...this.responseContent, { type, content: message, tabTitle, tabFavicon, aiModelName }];
     }
 
     public clear() {
@@ -201,6 +210,11 @@ export class ResponseAreaComponent extends LitElement {
                         const messageClass = msg.type === 'user' ? 'user-message' : 'ai-message';
                         const content = msg.type === 'ai' ? unsafeHTML(DOMPurify.sanitize(marked.parse(msg.content, { async: false }) as string)) : msg.content;
                         return html`
+                            ${msg.type === 'ai' && msg.aiModelName ? html`
+                                <div class="ai-model-header">
+                                    <strong>${msg.aiModelName}:</strong> 
+                                </div>
+                            ` : ''}
                             <div class="message-container ${messageClass}">
                                 ${msg.tabTitle && msg.tabFavicon ? html`
                                     <div class="tab-info-header">

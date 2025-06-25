@@ -284,6 +284,8 @@ export class SidepanelComponent extends LitElement {
         this.isChatRequestRunning = true;
         try {
             const content = await this.getPageContent();
+            debugLog('summary-extension-sidepanel', 'content:', content);
+
             const model = this.settings.getModel(this.selectedAiProvider);
             if (!model) {
                 return;
@@ -336,6 +338,8 @@ export class SidepanelComponent extends LitElement {
         this.isChatRequestRunning = true;
         try {
             const content = await this.getPageContent();
+            debugLog('summary-extension-sidepanel', 'content:', content);
+
             const model = this.settings.getModel(this.selectedAiProvider);
             if (!model) {
                 return;

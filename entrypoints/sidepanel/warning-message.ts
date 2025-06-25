@@ -13,8 +13,11 @@ export class WarningMessageComponent extends LitElement {
     @property({ type: Boolean })
     pingFailed: boolean = false;
 
+    @property({ type: Boolean })
+    notPrivateAiProviderOnPrivateSite: boolean = false;
+
     public hasWarning(): boolean {
-        return this.noModel || this.invalidTab || this.pingFailed;
+        return this.noModel || this.invalidTab || this.pingFailed || this.notPrivateAiProviderOnPrivateSite;
     }
 
     static styles = css`
@@ -44,6 +47,9 @@ export class WarningMessageComponent extends LitElement {
         }
         if (this.pingFailed) {
             messages.push('Failed to connect to the current tab, refresh may fix.');
+        }
+        if (this.notPrivateAiProviderOnPrivateSite) {
+            messages.push('Not private AI provider on private site.');
         }
 
         if (messages.length === 0) {

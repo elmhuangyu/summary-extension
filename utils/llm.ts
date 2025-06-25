@@ -15,17 +15,20 @@ export class Model {
     model: string
     apiKey: string
     maxToken: number
+    isPrivate: boolean
 
     constructor(provider: Provider,
         baseUrl: string,
         model: string,
         apiKey: string,
-        maxToken: number) {
+        maxToken: number,
+        isPrivate: boolean = false) {
         this.provider = provider;
         this.baseUrl = baseUrl;
         this.model = model;
         this.apiKey = apiKey;
         this.maxToken = maxToken;
+        this.isPrivate = isPrivate;
     }
 
     async check(): Promise<boolean> {

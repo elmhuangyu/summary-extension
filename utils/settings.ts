@@ -41,6 +41,7 @@ export interface OpenAiCompatibleProvider {
     model: string;
     accessToken: string;
     maxInputToken: number;
+    isPrivate: boolean;
 }
 
 export class AppSettings {
@@ -52,6 +53,7 @@ export class AppSettings {
     language: string;
     debugMode: boolean;
     openaiCompatibleProviders: OpenAiCompatibleProvider[];
+    privateSites: string[];
 
     constructor() {
         this.openaiApiKey = '';
@@ -62,6 +64,7 @@ export class AppSettings {
         this.language = supportedLanguage[0];
         this.debugMode = false;
         this.openaiCompatibleProviders = [];
+        this.privateSites = ["mail.google.com"];
     }
 
     cleanupExpiriedSettings() {
@@ -105,14 +108,14 @@ export class AppSettings {
         const gotMaxInputToken = maxInputTokens.get(parts[1]);
         const maxInputToken = gotMaxInputToken ? gotMaxInputToken : 0;
         if (parts[0] === 'openai') {
-            return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey, maxInputToken);
+            return new Model(Provider.OpenAI, '', parts[1], this.openaiApiKey, maxInputToken, false);
         }
         if (parts[0] === 'gemini') {
-            return new Model(Provider.Gemini, '', parts[1], this.geminiApiKey, maxInputToken);
+            return new Model(Provider.Gemini, '', parts[1], this.geminiApiKey, maxInputToken, false);
         }
         for (const p of this.openaiCompatibleProviders) {
             if (p.name == parts[1]) {
-                return new Model(Provider.OpenAICompatible, p.baseUrl, p.model, p.accessToken, p.maxInputToken);
+                return new Model(Provider.OpenAICompatible, p.baseUrl, p.model, p.accessToken, p.maxInputToken, p.isPrivate);
             }
         }
         return null;

@@ -77,6 +77,9 @@ export class SettingsForm extends LitElement {
     @query('#geminiApiKey')
     private geminiApiKey!: HTMLInputElement;
 
+    @query('#privateSites')
+    private privateSites!: HTMLTextAreaElement;
+
     @state()
     private settings: AppSettings = new AppSettings();
 
@@ -143,6 +146,8 @@ export class SettingsForm extends LitElement {
                 newSettings.defaultAi = value as string;
             } else if (key === 'language') {
                 newSettings.language = value as string;
+            } else if (key === 'privateSites') {
+                newSettings.privateSites = (value as string).split('\n').map(s => s.trim()).filter(s => s !== '');
             }
         });
 
@@ -239,6 +244,16 @@ export class SettingsForm extends LitElement {
                     </select>
                 </div>
 
+                <div>
+                    <label for="privateSites">Private Sites (one per line):</label>
+                    <textarea
+                        id="privateSites"
+                        name="privateSites"
+                        rows="5"
+                        .value=${this.settings.privateSites.join('\n')}
+                    ></textarea>
+                </div>
+
                 <h2>AI Provider</h2>
                 <h3>OpenAI</h3>
                 <div>
@@ -330,6 +345,9 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
     @query('#providerMaxInputToken')
     private providerMaxInputTokenInput!: HTMLInputElement;
 
+    @query('#providerIsPrivate')
+    private providerIsPrivateInput!: HTMLInputElement;
+
     static styles = [
         commonCss,
         css`
@@ -395,6 +413,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
     private addProvider() {
         const newProviderName = this.providerNameInput.value.trim();
         const newMaxInputToken = parseInt(this.providerMaxInputTokenInput.value.trim());
+        const newIsPrivate = this.providerIsPrivateInput.checked;
 
         // Basic validation
         if (!newProviderName || !this.providerBaseUrlInput.value.trim() || !this.providerModelInput.value.trim() || !this.providerAccessTokenInput.value.trim() || isNaN(newMaxInputToken)) {
@@ -418,6 +437,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
             model: this.providerModelInput.value.trim(),
             accessToken: this.providerAccessTokenInput.value.trim(),
             maxInputToken: newMaxInputToken,
+            isPrivate: newIsPrivate,
         };
 
         this.providers = [...this.providers, newProvider];
@@ -429,6 +449,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
         this.providerModelInput.value = '';
         this.providerAccessTokenInput.value = '';
         this.providerMaxInputTokenInput.value = '';
+        this.providerIsPrivateInput.checked = false;
     }
 
     private deleteProvider(nameToDelete: string) { // Now accepts 'name' instead of 'id'
@@ -480,6 +501,7 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
                                     <p>URL: ${provider.baseUrl}</p>
                                     <p>Model: ${provider.model}</p>
                                     <p>Max Input Token: ${provider.maxInputToken}</p>
+                                    <p>Is Private: ${provider.isPrivate ? 'Yes' : 'No'}</p>
                                 </div>
                                 <colored-button
                                     label="Delete"
@@ -541,6 +563,15 @@ export class OpenAiCompatibleProvidersForm extends LitElement {
                             .value=${live(this.providerMaxInputTokenInput?.value || '')}
                             placeholder="e.g., 4096"
                         >
+                    </div>
+                    <div class="checkbox-container oneline">
+                        <input
+                            type="checkbox"
+                            id="providerIsPrivate"
+                            name="providerIsPrivate"
+                            .checked=${live(this.providerIsPrivateInput?.checked || false)}
+                        >
+                        <label for="providerIsPrivate">Is Private</label>
                     </div>
                     <div class="oneline">
                     <colored-button label="Add Provider" @click=${this.addProvider}></colored-button>

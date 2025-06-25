@@ -212,7 +212,7 @@ export class ResponseAreaComponent extends LitElement {
                         return html`
                             ${msg.type === 'ai' && msg.aiModelName ? html`
                                 <div class="ai-model-header">
-                                    <strong>${msg.aiModelName}:</strong> 
+                                    <strong>${msg.aiModelName.split("/")[1]}:</strong> 
                                 </div>
                             ` : ''}
                             <div class="message-container ${messageClass}">

@@ -3,9 +3,10 @@ export interface tabInfo {
     title: string
     favicon: string | undefined
     valid_url: boolean
+    url: string
 }
 
-export const emptyTab = { id: 0, title: '', favicon: undefined, valid_url: false };
+export const emptyTab = { id: 0, title: '', favicon: undefined, valid_url: false, url: '' };
 
 export async function getCurrentWindowId(): Promise<number | undefined> {
     return (await browser.windows.getCurrent()).id;
@@ -23,6 +24,7 @@ export async function getCurrentActiveTab(): Promise<tabInfo> {
         title: tab.title ? tab.title : '',
         favicon: tab.favIconUrl,
         valid_url: tab.url ? isValidUrl(tab.url) : false,
+        url: tab.url ? tab.url : '',
     };
 }
 

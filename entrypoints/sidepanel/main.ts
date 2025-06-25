@@ -9,6 +9,8 @@ import { WarningMessageComponent } from './warning-message';
 import './response-area'; // Import the new component
 import { ResponseAreaComponent } from './response-area'; // Import the class
 import { debugLog } from '@/utils/debug';
+import { AppSettings } from '@/utils/settings';
+import { Model } from '@/utils/llm';
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
@@ -242,6 +244,7 @@ export class SidepanelComponent extends LitElement {
         this.currentTab = await getCurrentActiveTab();
         this.updateInvalidTabWarning();
         this.pingContentScript();
+        this.updatePrivateSiteWarning();
     }
 
     private async handleTabChange(activeInfo: { tabId: number; windowId?: number }) {
@@ -249,6 +252,7 @@ export class SidepanelComponent extends LitElement {
             this.currentTab = await getCurrentActiveTab();
             this.updateInvalidTabWarning();
             this.pingContentScript();
+            this.updatePrivateSiteWarning();
         }
     }
 
@@ -265,6 +269,7 @@ export class SidepanelComponent extends LitElement {
         const selectElement = event.target as HTMLSelectElement;
         this.selectedAiProvider = selectElement.value;
         this.updateThinkingModeVisibility();
+        this.updatePrivateSiteWarning();
     }
 
     private updateThinkingModeVisibility() {
@@ -272,6 +277,12 @@ export class SidepanelComponent extends LitElement {
         if (!this.showThinkingMode) {
             this.thinkingModeEnabled = false;
         }
+    }
+
+    private updatePrivateSiteWarning() {
+        const model = this.settings.getModel(this.selectedAiProvider);
+        const isPrivateSite = this.settings.privateSites.some(site => this.currentTab.url.includes(site));
+        this.warningMessage.notPrivateAiProviderOnPrivateSite = isPrivateSite && (!model || !model.isPrivate);
     }
 
     private async handleSummarizeClick() {

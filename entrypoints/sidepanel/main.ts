@@ -10,6 +10,9 @@ import './response-area';
 import { ResponseAreaComponent } from './response-area';
 import { debugLog } from '@/utils/debug';
 import { AppSettings } from '@/utils/settings';
+import { getBody } from '@/utils/content-extract';
+import { createMarkdownContent } from '@/third_party/obsidian-clipper/src/utils/markdown-converter';
+
 
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
@@ -233,7 +236,6 @@ export class SidepanelComponent extends LitElement {
         }
         this.currentTab = await getCurrentActiveTab();
         this.updateInvalidTabWarning();
-        this.pingContentScript();
         this.updatePrivateSiteWarning();
     }
 
@@ -241,7 +243,6 @@ export class SidepanelComponent extends LitElement {
         if (activeInfo.windowId && activeInfo.windowId === this.windowId) {
             this.currentTab = await getCurrentActiveTab();
             this.updateInvalidTabWarning();
-            this.pingContentScript();
             this.updatePrivateSiteWarning();
         }
     }
@@ -276,6 +277,21 @@ export class SidepanelComponent extends LitElement {
         this.warningMessage.notPrivateAiProviderOnPrivateSite = isPrivateSite && (!model || !model.isPrivate);
     }
 
+    private async getPageContent(): Promise<string | undefined> {
+        const url = this.currentTab.url;
+        const funcRes = await browser.scripting.executeScript({
+            target: { tabId: this.currentTab.id },
+            func: getBody,
+        });
+
+        if (funcRes.length < 1 || !funcRes[0].result) {
+            return undefined;
+        }
+
+        const content = funcRes[0].result;
+        return createMarkdownContent(content, url);
+    }
+
     private async handleSummarizeClick() {
         if (this.warningMessage.hasWarning()) {
             return;
@@ -286,6 +302,10 @@ export class SidepanelComponent extends LitElement {
         this.isChatRequestRunning = true;
         try {
             const content = await this.getPageContent();
+            if (!content) {
+                this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
+                return;
+            }
             debugLog('summary-extension-sidepanel', 'content:', content);
 
             const model = this.settings.getModel(this.selectedAiProvider);
@@ -299,16 +319,13 @@ export class SidepanelComponent extends LitElement {
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon, this.selectedAiProvider);
-        } finally {
+        } catch (e) {
+            this.responseAreaComponent.addMessage('error', `Error from ${this.selectedAiProvider}: ${e}`);
+        }
+        finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;
         }
-    }
-
-    private async getPageContent(): Promise<string> {
-        const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "getPageContent" });
-        const md = response as string;
-        return md
     }
 
     private handleClearClick() {
@@ -340,6 +357,10 @@ export class SidepanelComponent extends LitElement {
         this.isChatRequestRunning = true;
         try {
             const content = await this.getPageContent();
+            if (!content) {
+                this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
+                return;
+            }
             debugLog('summary-extension-sidepanel', 'content:', content);
 
             const model = this.settings.getModel(this.selectedAiProvider);
@@ -355,18 +376,12 @@ export class SidepanelComponent extends LitElement {
             const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
-        } finally {
+        } catch (e) {
+            this.responseAreaComponent.addMessage('error', `Error from ${this.selectedAiProvider}: ${e}`);
+        }
+        finally {
             this.responseAreaComponent.toggleLoading(false);
             this.isChatRequestRunning = false;
-        }
-    }
-
-    private async pingContentScript() {
-        try {
-            const response = await browser.tabs.sendMessage(this.currentTab.id, { action: "ping" });
-            this.warningMessage.pingFailed = false; // Reset on successful ping
-        } catch (error) {
-            this.warningMessage.pingFailed = true; // Set warning on failed ping
         }
     }
 

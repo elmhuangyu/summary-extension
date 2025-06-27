@@ -5,7 +5,7 @@ import { marked } from 'marked';
 import DOMPurify from "isomorphic-dompurify";
 
 interface Message {
-    type: 'user' | 'ai';
+    type: 'user' | 'ai' | 'error';
     content: string;
     tabTitle?: string;
     tabFavicon?: string;
@@ -102,6 +102,13 @@ export class ResponseAreaComponent extends LitElement {
             max-width: 90%;
         }
 
+        .error-message {
+            background-color: #ffe6e6;
+            color: #d8000c;
+            align-self: flex-start;
+            max-width: 90%;
+        }
+
         .ai-model-header {
             font-size: 0.85em;
             color: #555;
@@ -179,7 +186,7 @@ export class ResponseAreaComponent extends LitElement {
         }
     }
 
-    public addMessage(type: 'user' | 'ai', message: string, tabTitle?: string, tabFavicon?: string, aiModelName?: string) {
+    public addMessage(type: 'user' | 'ai' | 'error', message: string, tabTitle?: string, tabFavicon?: string, aiModelName?: string) {
         this.responseContent = [...this.responseContent, { type, content: message, tabTitle, tabFavicon, aiModelName }];
     }
 
@@ -207,7 +214,7 @@ export class ResponseAreaComponent extends LitElement {
                 ${this.responseContent.length === 0
                     ? html`<p class="welcome-message-container">Welcome! Ask a question about the page or click Summarize.</p>`
                     : this.responseContent.map(msg => {
-                        const messageClass = msg.type === 'user' ? 'user-message' : 'ai-message';
+                        const messageClass = `${msg.type}-message`;
                         const content = msg.type === 'ai' ? unsafeHTML(DOMPurify.sanitize(marked.parse(msg.content, { async: false }) as string)) : msg.content;
                         return html`
                             ${msg.type === 'ai' && msg.aiModelName ? html`

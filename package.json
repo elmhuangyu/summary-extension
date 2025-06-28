@@ -24,7 +24,6 @@
   "dependencies": {
     "@google/genai": "^1.5.1",
     "@wxt-dev/webextension-polyfill": "^1.0.0",
-    "defuddle": "^0.6.4",
     "gpt-tokenizer": "^3.0.1",
     "iconify-icon": "^3.0.0",
     "isomorphic-dompurify": "^2.25.0",

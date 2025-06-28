@@ -8,6 +8,7 @@ export default defineConfig({
         "name": "AI Page Assistant",
         "version": "0.1.0",
         "description": "Use AI to summarize and chat about the current web page.",
+        "host_permissions": [ "*://*/*" ],
         "permissions": [
             "activeTab",
             "scripting",

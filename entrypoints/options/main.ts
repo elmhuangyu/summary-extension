@@ -12,8 +12,8 @@ import {
     loadOpenAiCompatibleProviders,
     saveOpenAiCompatibleProviders,
     saveSettings,
-} from '@/utils/settings';
-import { Provider, Model } from '@/utils/llm';
+} from '@/lib/settings';
+import { Provider, Model } from '@/lib/llm';
 import '@/components/coloered-button';
 import { ColoredButton } from '@/components/coloered-button';
 

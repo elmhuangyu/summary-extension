@@ -2,15 +2,15 @@ import { LitElement, html, css, PropertyValueMap } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import 'iconify-icon';
-import '@/utils/settings';
+import '@/lib/settings';
 import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
 import './response-area';
 import { ResponseAreaComponent } from './response-area';
-import { debugLog } from '@/utils/debug';
-import { AppSettings } from '@/utils/settings';
-import { getBody } from '@/utils/content-extract';
+import { debugLog } from '@/lib/debug';
+import { AppSettings, loadSettingsFromExtensionLocal } from '@/lib/settings';
+import { getBody } from '@/lib/content-extract';
 import { createMarkdownContent } from '@/third_party/obsidian-clipper/src/utils/markdown-converter';
 
 

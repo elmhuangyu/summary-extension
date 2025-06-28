@@ -78,7 +78,6 @@ export class Model {
         // build the prompt
         const p = `${prompt}
 
-
 \`\`\`${contentType}
 ${cuttableContent}
 \`\`\`

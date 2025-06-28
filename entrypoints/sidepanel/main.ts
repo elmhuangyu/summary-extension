@@ -3,7 +3,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import 'iconify-icon';
 import '@/lib/settings';
-import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab } from './tab-helper';
+import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab, PageContext } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
 import './response-area';
@@ -277,57 +277,6 @@ export class SidepanelComponent extends LitElement {
         this.warningMessage.notPrivateAiProviderOnPrivateSite = isPrivateSite && (!model || !model.isPrivate);
     }
 
-    private async getPageContent(): Promise<string | undefined> {
-        const url = this.currentTab.url;
-        const funcRes = await browser.scripting.executeScript({
-            target: { tabId: this.currentTab.id },
-            func: getBody,
-        });
-
-        if (funcRes.length < 1 || !funcRes[0].result) {
-            return undefined;
-        }
-
-        const content = funcRes[0].result;
-        return createMarkdownContent(content, url);
-    }
-
-    private async handleSummarizeClick() {
-        if (this.warningMessage.hasWarning()) {
-            return;
-        }
-        if (this.isChatRequestRunning) {
-            return;
-        }
-        this.isChatRequestRunning = true;
-        try {
-            const content = await this.getPageContent();
-            if (!content) {
-                this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
-                return;
-            }
-            debugLog('summary-extension-sidepanel', 'content:', content);
-
-            const model = this.settings.getModel(this.selectedAiProvider);
-            if (!model) {
-                return;
-            }
-            const prompt = 'Summarize the follow content';
-
-            this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
-            this.responseAreaComponent.toggleLoading(true);
-            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
-            debugLog('summary-extension-sidepanel', 'ai resp:', resp);
-            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon, this.selectedAiProvider);
-        } catch (e) {
-            this.responseAreaComponent.addMessage('error', `Error from ${this.selectedAiProvider}: ${e}`);
-        }
-        finally {
-            this.responseAreaComponent.toggleLoading(false);
-            this.isChatRequestRunning = false;
-        }
-    }
-
     private handleClearClick() {
         this.responseAreaComponent.clear();
     }
@@ -338,6 +287,47 @@ export class SidepanelComponent extends LitElement {
 
     private handleChatInputChange(event: Event) {
         this.chatInputText = (event.target as HTMLTextAreaElement).value;
+    }
+
+    private async handleSummarizeClick() {
+        if (this.warningMessage.hasWarning()) {
+            return;
+        }
+        if (this.isChatRequestRunning) {
+            return;
+        }
+        this.isChatRequestRunning = true;
+        const ctx = new PageContext(this.currentTab);
+        try {
+            const content = await ctx.getPageContent();
+            if (!content) {
+                this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
+                return;
+            }
+            debugLog('summary-extension-sidepanel', 'content:', content);
+
+            const model = this.settings.getModel(this.selectedAiProvider);
+            if (!model) {
+                return;
+            }
+
+            this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
+            this.responseAreaComponent.toggleLoading(true);
+
+            const prompt = `${ctx.summaryPrompt()}
+
+${ctx.hints()}`;
+
+            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            debugLog('summary-extension-sidepanel', 'ai resp:', resp);
+            this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon, this.selectedAiProvider);
+        } catch (e) {
+            this.responseAreaComponent.addMessage('error', `Error from ${this.selectedAiProvider}: ${e}`);
+        }
+        finally {
+            this.responseAreaComponent.toggleLoading(false);
+            this.isChatRequestRunning = false;
+        }
     }
 
     private chatInputOnKeyboard(e: KeyboardEvent) {
@@ -355,8 +345,9 @@ export class SidepanelComponent extends LitElement {
             return;
         }
         this.isChatRequestRunning = true;
+        const ctx = new PageContext(this.currentTab);
         try {
-            const content = await this.getPageContent();
+            const content = await ctx.getPageContent();
             if (!content) {
                 this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
                 return;
@@ -367,7 +358,9 @@ export class SidepanelComponent extends LitElement {
             if (!model) {
                 return;
             }
-            const prompt = `User's question is "${this.chatInputText}", answer based on following content.`;
+            const prompt = `User's question is "${this.chatInputText}", answer based on following content.
+            
+    ${ctx.hints()}`;
 
             this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.chatInputText = ''; // Clear input after sending

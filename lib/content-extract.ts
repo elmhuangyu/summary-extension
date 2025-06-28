@@ -1,5 +1,3 @@
-import { getDomain } from '@/third_party/obsidian-clipper/src/utils/string-utils';
-
 export function getBody(): string {
     function nodeTraverse(node: Node): string {
         if (node.nodeType === Node.TEXT_NODE) {
@@ -50,4 +48,9 @@ export function getBody(): string {
     }
 
     return nodeTraverse(document.body);
+}
+
+export function getEmailFromGmail(): string {
+    const email = document.querySelector('div.adn.ads');
+    return email ? email.outerHTML : '';
 }

@@ -122,7 +122,10 @@ export class AppSettings {
     }
 
     public getSystemPrompt(): string {
-        return `Always response in language ${this.language}`;
+        return `You are a browser extension helps user with the current viewing page.
+
+- User will give you the content of the page.
+- Always response in language ${this.language}.`;
     }
 }
 

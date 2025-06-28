@@ -367,7 +367,7 @@ export class SidepanelComponent extends LitElement {
             if (!model) {
                 return;
             }
-            const prompt = this.chatInputText;
+            const prompt = `User's question is "${this.chatInputText}", answer based on following content.`;
 
             this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.chatInputText = ''; // Clear input after sending

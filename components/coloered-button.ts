@@ -20,7 +20,7 @@ export class ColoredButton extends LitElement {
         position: absolute;
         inset: 0px;
         border-radius: 50%;
-        border: 5px solid #FFF;
+        border: 3px solid #FFF;
         animation: prixClipFix 2s linear infinite ;
     }
 

@@ -53,9 +53,9 @@ export class PageContext {
 
     public hints(): string {
         if (this.tab.url.startsWith('https://mail.google.com/mail/u/0/#inbox/')) {
-            return 'content is a email';
+            return `content is a email, the thread subject is ${this.tab.title}`;
         }
-        return `content is from website ${this.tab.url}`;
+        return `content is from website, title is ${this.tab.title}`;
     }
 
     public summaryPrompt(): string {

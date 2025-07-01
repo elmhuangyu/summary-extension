@@ -1,0 +1,7 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/sub-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10

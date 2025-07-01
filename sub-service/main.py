@@ -16,6 +16,7 @@ from ytdlp import (
 import cachetools
 import logging
 import os
+import tempfile
 import threading
 
 logger = logging.getLogger(__name__)
@@ -78,60 +79,58 @@ async def get_subtitles(
     """
     Downloads subtitles for a given YouTube or Bilibili video URL.
     """
+    
+    video_url = request.video_url
+    cookies = request.cookies
+
+    if video_url == "":
+        raise HTTPException(status_code=400, detail="video_url is required.")
+
+    site, video_id = extract_site_and_video_id(video_url)
+    cache_key = f"{site}:{video_id}"
+
+    with cache_lock:
+        if cache_key in cache:
+            return PlainTextResponse(content=cache[cache_key])
+
     try:
-        video_url = request.video_url
-        cookies = request.cookies
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
 
-        if video_url == "":
-            raise HTTPException(status_code=400, detail="video_url is required.")
+            # write the cookies file
+            convert_cookies_to_netscape_format(cookies)
 
-        site, video_id = extract_site_and_video_id(video_url)
-        cache_key = f"{site}:{video_id}"
+            # bilibili has ai-zh only
+            downloadReq = DownloadYtdlpSubtitlesRequest(
+                video_url=video_url,
+                sub_type=SubType.Subtitles,
+                lang="ai-zh",
+                cookie_file_path="cookies.txt",
+            )
 
-        with cache_lock:
-            if cache_key in cache:
-                return PlainTextResponse(content=cache[cache_key])
+            if site == "youtube":
+                # list sub
+                subs = list_ytdlp_subtitles(video_url)
 
-        # create temp dir
-        os.mkdir(cache_key)
-        os.chdir(cache_key)
+                if len(subs.subtitles) == 0 and len(subs.automaticCaptions) == 0:
+                    raise HTTPException(
+                        status_code=404, detail="No subtitles found for this video."
+                    )
 
-        # write the cookies file
-        convert_cookies_to_netscape_format(cookies)
+                downloadReq = choose_subtitle(subs, video_url)
 
-        # bilibili has ai-zh only
-        downloadReq = DownloadYtdlpSubtitlesRequest(
-            video_url=video_url,
-            sub_type=SubType.Subtitles,
-            lang="ai-zh",
-            cookie_file_path="cookies.txt",
-        )
+            subtitle_filename = download_ytdlp_subtitles(downloadReq)
+            if subtitle_filename == "":
+                raise "fail to download subtitle"
 
-        if site == "youtube":
-            # list sub
-            subs = list_ytdlp_subtitles(video_url)
+            subtitle_content = ""
+            with open(subtitle_filename, "r") as file:
+                subtitle_content = file.read()
 
-            if len(subs.subtitles) == 0 and len(subs.automaticCaptions) == 0:
-                raise HTTPException(
-                    status_code=404, detail="No subtitles found for this video."
-                )
+                with cache_lock:
+                    cache[cache_key] = subtitle_content
 
-            downloadReq = choose_subtitle(subs, video_url)
-
-        subtitle_filename = download_ytdlp_subtitles(downloadReq)
-        if subtitle_filename == "":
-            raise "fail to download subtitle"
-
-        subtitle_content = ""
-        with open(subtitle_filename, "r"):
-            subtitle_content = subtitle_filename.read()
-
-            with cache_lock:
-                cache[cache_key] = subtitle_content
-
-        os.remove(subtitle_filename)
-
-        return PlainTextResponse(content=subtitle_content)
+            return PlainTextResponse(content=subtitle_content)
 
     except HTTPException as e:
         raise e

@@ -79,7 +79,7 @@ async def get_subtitles(
     """
     Downloads subtitles for a given YouTube or Bilibili video URL.
     """
-    
+
     video_url = request.video_url
     cookies = request.cookies
 

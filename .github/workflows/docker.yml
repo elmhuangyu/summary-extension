@@ -1,4 +1,4 @@
-name: Docker Image: Sub-Service
+name: Sub-Service Docker Image
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'sub-service/**'
-  workflow_dispatch
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/sub-service

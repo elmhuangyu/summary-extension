@@ -54,7 +54,8 @@ const commonCss = css`
         color: #555;
         margin: 5px;
     }
-    input[type="password"] {
+    input[type="password"],
+    input[type="url"] {
         padding: 10px;
         border: 1px solid #ddd;
         border-radius: 4px;
@@ -79,6 +80,12 @@ export class SettingsForm extends LitElement {
 
     @query('#privateSites')
     private privateSites!: HTMLTextAreaElement;
+
+    @query('#subServiceAddress')
+    private subServiceAddress!: HTMLInputElement;
+
+    @query('#subServiceToken')
+    private subServiceToken!: HTMLInputElement;
 
     @state()
     private settings: AppSettings = new AppSettings();
@@ -148,6 +155,10 @@ export class SettingsForm extends LitElement {
                 newSettings.language = value as string;
             } else if (key === 'privateSites') {
                 newSettings.privateSites = (value as string).split('\n').map(s => s.trim()).filter(s => s !== '');
+            } else if (key === 'subServiceAddress') {
+                newSettings.subService.address = value as string;
+            } else if (key === 'subServiceToken') {
+                newSettings.subService.token = value as string;
             }
         });
 
@@ -203,6 +214,49 @@ export class SettingsForm extends LitElement {
         button.loading = false;
         button.variant = 'danger';
         button.label = 'Failed';
+    }
+
+    private async testSubServiceConnection(event: Event) {
+        const button = event.target as ColoredButton;
+        button.loading = true;
+
+        const address = this.subServiceAddress.value;
+        const token = this.subServiceToken.value;
+
+        if (!address || !token) {
+            button.loading = false;
+            button.variant = 'danger';
+            button.label = 'Missing Info';
+            return;
+        }
+
+        try {
+            const response = await fetch(address, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'video_url': 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+                }),
+            });
+
+            if (response.ok) {
+                button.loading = false;
+                button.variant = 'success';
+                button.label = 'Success';
+            } else {
+                button.loading = false;
+                button.variant = 'danger';
+                button.label = `Failed: ${response.status}`;
+            }
+        } catch (error) {
+            console.error('Sub-service connection test failed:', error);
+            button.loading = false;
+            button.variant = 'danger';
+            button.label = 'Failed: Network Error';
+        }
     }
 
     render() {
@@ -316,6 +370,32 @@ export class SettingsForm extends LitElement {
                                 <label for="geminiModel-${model}">${model}</label>
                             </div>
                         `)}
+                    </div>
+                </div>
+
+                <h2>Sub Service</h2>
+                <div>
+                    <label for="subServiceAddress">Sub Service Address:</label>
+                    <div class="oneline">
+                        <input
+                            type="url"
+                            id="subServiceAddress"
+                            name="subServiceAddress"
+                            .value=${this.settings.subService.address}
+                            placeholder="e.g., https://your-sub-service.com"
+                        >
+                    </div>
+                </div>
+                <div>
+                    <label for="subServiceToken">Sub Service Token:</label>
+                    <div class="oneline">
+                        <input
+                            type="password"
+                            id="subServiceToken"
+                            name="subServiceToken"
+                            .value=${this.settings.subService.token}
+                        >
+                        <colored-button label="Test" @click=${this.testSubServiceConnection}></colored-button>
                     </div>
                 </div>
 

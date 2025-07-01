@@ -44,6 +44,11 @@ export interface OpenAiCompatibleProvider {
     isPrivate: boolean;
 }
 
+export interface SubServiceSettings {
+    address: string;
+    token: string;
+}
+
 export class AppSettings {
     openaiApiKey: string;
     enabledOpenaiModels: string[];
@@ -54,6 +59,7 @@ export class AppSettings {
     debugMode: boolean;
     openaiCompatibleProviders: OpenAiCompatibleProvider[];
     privateSites: string[];
+    subService: SubServiceSettings;
 
     constructor() {
         this.openaiApiKey = '';
@@ -65,6 +71,7 @@ export class AppSettings {
         this.debugMode = false;
         this.openaiCompatibleProviders = [];
         this.privateSites = ["mail.google.com"];
+        this.subService = { address: '', token: '' };
     }
 
     cleanupExpiriedSettings() {

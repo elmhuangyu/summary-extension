@@ -10,6 +10,9 @@ import os
 
 
 def e2e_test_enable() -> bool:
+    env = os.getenv("E2E_TEST")
+    if env is None:
+        return False
     return os.getenv("E2E_TEST").lower() == "true"
 
 

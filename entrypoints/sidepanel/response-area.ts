@@ -115,9 +115,10 @@ export class ResponseAreaComponent extends LitElement {
         .ai-model-header {
             font-size: 0.85em;
             color: #555;
-            align-self: flex-start; /* Align with the AI message box */
-            max-width: 90%; /* Match the width of the AI message box */
-            padding-left: 8px; /* Align with the padding of the message container */
+            align-self: flex-start;
+            max-width: 90%;
+            padding-left: 8px;
+            margin-bottom: 2px;
         }
 
         /* Markdown specific styles */
@@ -215,27 +216,29 @@ export class ResponseAreaComponent extends LitElement {
         return html`
             <div id="responseArea">
                 ${this.responseContent.length === 0
-                    ? html`<p class="welcome-message-container">Welcome! Ask a question about the page or click Summarize.</p>`
-                    : this.responseContent.map(msg => {
-                        const messageClass = `${msg.type}-message`;
-                        const content = msg.type === 'ai' ? unsafeHTML(DOMPurify.sanitize(marked.parse(msg.content, { async: false }) as string)) : msg.content;
-                        return html`
-                            ${msg.type === 'ai' && msg.aiModelName ? html`
-                                <div class="ai-model-header">
-                                    <strong>${msg.aiModelName.split("/")[1]}:</strong> 
-                                </div>
-                            ` : ''}
-                            <div class="message-container ${messageClass}">
-                                ${msg.tabTitle && msg.tabFavicon ? html`
-                                    <div class="tab-info-header">
-                                        <img src="${msg.tabFavicon}">
-                                        <span class="tab-title-text">${msg.tabTitle}</span>
+                ? html`<p class="welcome-message-container">Welcome! Ask a question about the page or click Summarize.</p>`
+                : this.responseContent.map(msg => {
+                    const messageClass = `${msg.type}-message`;
+                    const content = msg.type === 'ai' ? unsafeHTML(DOMPurify.sanitize(marked.parse(msg.content, { async: false }) as string)) : msg.content;
+                    return html`
+                            <div>
+                                ${msg.type === 'ai' && msg.aiModelName ? html`
+                                    <div class="ai-model-header">
+                                        <strong>${msg.aiModelName.split("/")[1]}:</strong> 
                                     </div>
                                 ` : ''}
-                                ${content}
+                                <div class="message-container ${messageClass}">
+                                    ${msg.tabTitle && msg.tabFavicon ? html`
+                                        <div class="tab-info-header">
+                                            <img src="${msg.tabFavicon}">
+                                            <span class="tab-title-text">${msg.tabTitle}</span>
+                                        </div>
+                                    ` : ''}
+                                    ${content}
+                                </div>
                             </div>
                         `;
-                    })}
+                })}
                 ${this.isLoading ? html`<div class="loader-container"><div class="loader"></div><span>${this.loadingMessage}</span></div>` : ''}
             </div>
         `;

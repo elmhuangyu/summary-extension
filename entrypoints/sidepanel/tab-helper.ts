@@ -1,6 +1,7 @@
 import { getBody, getEmailFromGmail } from '@/lib/content-extract';
 import { createMarkdownContent } from '@/third_party/obsidian-clipper/src/utils/markdown-converter';
-
+import { getSubtitle } from '@/lib/sub';
+import { AppSettings } from '@/lib/settings';
 
 export class TabInfo {
     id: number;
@@ -108,20 +109,25 @@ function isBilibiliVideoUrl(url: string): boolean {
 
 enum pageType {
     GmailEmail,
+    Video,
     General,
 }
 
 export class PageContext {
     tab: TabInfo
+    settings: AppSettings
     ty: pageType = pageType.General
 
-    constructor(tab: TabInfo) {
+    constructor(tab: TabInfo, settings: AppSettings) {
         this.tab = tab;
+        this.settings = settings;
     }
 
     public hints(): string {
         if (this.tab.url.startsWith('https://mail.google.com/mail/u/0/#inbox/')) {
             return `content is a email, the thread subject is ${this.tab.title}`;
+        } else if (this.ty === pageType.Video) {
+            return `content is subtitle of video, the title of video is ${this.tab.title}`;
         }
         return `content is from website, title is ${this.tab.title}`;
     }
@@ -129,11 +135,26 @@ export class PageContext {
     public summaryPrompt(): string {
         if (this.tab.url.startsWith('https://mail.google.com/mail/u/0/#inbox/')) {
             return 'summarize this email, list action items if the email contains action items';
+        } else if (this.ty === pageType.Video) {
+            return 'summarize the video using its subtitle';
         }
-        return `summarize this page`;
+        return 'summarize this page';
+    }
+
+    public contentType(): string {
+        if (this.ty === pageType.Video) {
+            return 'subtitle';
+        }
+        return 'markdown';
     }
 
     public async getPageContent(): Promise<string> {
+        if (this.tab.isBilibiliVideo || this.tab.isYoutubeVideo) {
+            const content = await getSubtitle(this.tab.url, this.settings);
+            this.ty = pageType.Video;
+            return content;
+        }
+
         // if email content is found, use the content.
         if (this.tab.url.startsWith('https://mail.google.com/mail/')) {
             const funcRes = await browser.scripting.executeScript({

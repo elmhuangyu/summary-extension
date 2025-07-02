@@ -11,6 +11,7 @@ export default defineConfig({
         "host_permissions": [ "*://*/*" ],
         "permissions": [
             "activeTab",
+            "cookies",
             "scripting",
             "sidePanel",
             "storage",

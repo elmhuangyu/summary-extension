@@ -11,7 +11,6 @@ import { ResponseAreaComponent } from './response-area';
 import { debugLog } from '@/lib/debug';
 import { AppSettings, loadSettingsFromExtensionLocal } from '@/lib/settings';
 
-
 @customElement('sidepanel-component')
 export class SidepanelComponent extends LitElement {
     @property({ type: String })
@@ -321,8 +320,10 @@ export class SidepanelComponent extends LitElement {
             return;
         }
         this.isChatRequestRunning = true;
-        const ctx = new PageContext(this.currentTab);
+        const ctx = new PageContext(this.currentTab, this.settings);
         try {
+            this.responseAreaComponent.toggleLoading(true);
+
             const content = await ctx.getPageContent();
             if (!content) {
                 this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
@@ -336,13 +337,12 @@ export class SidepanelComponent extends LitElement {
             }
 
             this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
-            this.responseAreaComponent.toggleLoading(true);
 
             const prompt = `${ctx.summaryPrompt()}
 
 ${ctx.hints()}`;
 
-            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            const resp = await model.chatWithContent(prompt, content, ctx.contentType(), this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon, this.selectedAiProvider);
         } catch (e) {
@@ -369,8 +369,10 @@ ${ctx.hints()}`;
             return;
         }
         this.isChatRequestRunning = true;
-        const ctx = new PageContext(this.currentTab);
+        const ctx = new PageContext(this.currentTab, this.settings);
         try {
+            this.responseAreaComponent.toggleLoading(true);
+
             const content = await ctx.getPageContent();
             if (!content) {
                 this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
@@ -389,8 +391,7 @@ ${ctx.hints()}`;
             this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.chatInputText = ''; // Clear input after sending
 
-            this.responseAreaComponent.toggleLoading(true);
-            const resp = await model.chatWithContent(prompt, content, 'markdown', this.settings.getSystemPrompt(), this.thinkingModeEnabled);
+            const resp = await model.chatWithContent(prompt, content, ctx.contentType(), this.settings.getSystemPrompt(), this.thinkingModeEnabled);
             debugLog('summary-extension-sidepanel', 'ai resp:', resp);
             this.responseAreaComponent.addMessage('ai', resp, this.currentTab.title, this.currentTab.favicon);
         } catch (e) {

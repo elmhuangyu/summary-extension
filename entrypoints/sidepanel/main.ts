@@ -319,23 +319,26 @@ export class SidepanelComponent extends LitElement {
         if (this.isChatRequestRunning) {
             return;
         }
+        const model = this.settings.getModel(this.selectedAiProvider);
+        if (!model) {
+            return;
+        }
         this.isChatRequestRunning = true;
         const ctx = new PageContext(this.currentTab, this.settings);
         try {
             this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
-            this.responseAreaComponent.toggleLoading(true);
+            this.responseAreaComponent.toggleLoading(true, 'Getting content from web page...');
 
             const content = await ctx.getPageContent();
             if (!content) {
                 this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
+                this.responseAreaComponent.toggleLoading(false);
                 return;
             }
             debugLog('summary-extension-sidepanel', 'content:', content);
+            this.responseAreaComponent.toggleLoading(true, 'Waiting for LLM response...');
 
-            const model = this.settings.getModel(this.selectedAiProvider);
-            if (!model) {
-                return;
-            }
+            
 
             const prompt = `${ctx.summaryPrompt()}
 
@@ -367,23 +370,25 @@ ${ctx.hints()}`;
         if (this.isChatRequestRunning || this.chatInputText.trim() === '') {
             return;
         }
+        const model = this.settings.getModel(this.selectedAiProvider);
+        if (!model) {
+            return;
+        }
         this.isChatRequestRunning = true;
         const ctx = new PageContext(this.currentTab, this.settings);
         try {
             this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
-            this.responseAreaComponent.toggleLoading(true);
+            this.responseAreaComponent.toggleLoading(true, 'Getting content from web page...');
 
             const content = await ctx.getPageContent();
             if (!content) {
                 this.responseAreaComponent.addMessage('error', 'Could not retrieve content from the page.');
+                this.responseAreaComponent.toggleLoading(false);
                 return;
             }
             debugLog('summary-extension-sidepanel', 'content:', content);
+            this.responseAreaComponent.toggleLoading(true, 'Waiting for LLM response...');
 
-            const model = this.settings.getModel(this.selectedAiProvider);
-            if (!model) {
-                return;
-            }
             const prompt = `User's question is "${this.chatInputText}", answer based on following content.
             
     ${ctx.hints()}`;

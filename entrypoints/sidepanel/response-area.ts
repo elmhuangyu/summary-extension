@@ -20,6 +20,9 @@ export class ResponseAreaComponent extends LitElement {
     @property({ type: Boolean })
     private isLoading: boolean = false;
 
+    @property({ type: String })
+    private loadingMessage: string = '';
+
     @query('#responseArea')
     private responseAreaDiv!: HTMLDivElement;
 
@@ -154,29 +157,28 @@ export class ResponseAreaComponent extends LitElement {
             padding: 10px 0;
         }
 
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Center vertically with text */
+            gap: 8px; /* Space between loader and text */
+            padding: 10px 0;
+            color: #555; /* Text color */
+            font-size: 0.9em;
+        }
+
         .loader {
             width: 16px;
             height: 16px;
+            border: 2px solid #f3f3f3; /* Light grey */
+            border-top: 2px solid #555; /* Dark grey */
             border-radius: 50%;
-            background-color: #555; /* Dark grey */
-            box-shadow: 32px 0 #555, -32px 0 #555; /* Dark grey */
-            position: relative;
-            animation: flash 0.5s ease-out infinite alternate;
+            animation: spin 1s linear infinite;
         }
 
-        @keyframes flash {
-            0% {
-                background-color: #5552; /* Transparent dark grey */
-                box-shadow: 32px 0 #5552, -32px 0 #555; /* Transparent dark grey, Dark grey */
-            }
-            50% {
-                background-color: #555; /* Dark grey */
-                box-shadow: 32px 0 #5552, -32px 0 #5552; /* Transparent dark grey */
-            }
-            100% {
-                background-color: #5552; /* Transparent dark grey */
-                box-shadow: 32px 0 #555, -32px 0 #5552; /* Dark grey, Transparent dark grey */
-            }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     `;
 
@@ -195,8 +197,9 @@ export class ResponseAreaComponent extends LitElement {
         this.isLoading = false; // Clear loading state when messages are cleared
     }
 
-    public toggleLoading(show: boolean) {
+    public toggleLoading(show: boolean, message: string = '') {
         this.isLoading = show;
+        this.loadingMessage = message;
         if (show) {
             this.scrollToBottom(); // Scroll to bottom when loading starts
         }
@@ -233,7 +236,7 @@ export class ResponseAreaComponent extends LitElement {
                             </div>
                         `;
                     })}
-                ${this.isLoading ? html`<div class="loader-container"><div class="loader"></div></div>` : ''}
+                ${this.isLoading ? html`<div class="loader-container"><div class="loader"></div><span>${this.loadingMessage}</span></div>` : ''}
             </div>
         `;
     }

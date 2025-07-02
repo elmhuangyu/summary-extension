@@ -13,8 +13,26 @@ export class WarningMessageComponent extends LitElement {
     @property({ type: Boolean })
     notPrivateAiProviderOnPrivateSite: boolean = false;
 
+    @property({ type: Boolean })
+    noSubtitleServiceSetup: boolean = false;
+
+    @property({ type: Boolean })
+    videoDoesNotHaveSubtitle: boolean = false;
+
+    @property({ type: Boolean })
+    bilibiliRequiresLoginToAccessSubtitle: boolean = false;
+
     public hasWarning(): boolean {
-        return this.noModel || this.invalidTab || this.notPrivateAiProviderOnPrivateSite;
+        return this.noModel || this.invalidTab || this.notPrivateAiProviderOnPrivateSite || this.noSubtitleServiceSetup || this.videoDoesNotHaveSubtitle || this.bilibiliRequiresLoginToAccessSubtitle;
+    }
+
+    public clearWarnings(): void {
+        this.noModel = false;
+        this.invalidTab = false;
+        this.notPrivateAiProviderOnPrivateSite = false;
+        this.noSubtitleServiceSetup = false;
+        this.videoDoesNotHaveSubtitle = false;
+        this.bilibiliRequiresLoginToAccessSubtitle = false;
     }
 
     static styles = css`
@@ -44,6 +62,15 @@ export class WarningMessageComponent extends LitElement {
         }
         if (this.notPrivateAiProviderOnPrivateSite) {
             messages.push('Not private AI provider on private site.');
+        }
+        if (this.noSubtitleServiceSetup) {
+            messages.push('No subtitle service is setup, please go to option page to config.');
+        }
+        if (this.videoDoesNotHaveSubtitle) {
+            messages.push('Video does not have subtitle.');
+        }
+        if (this.bilibiliRequiresLoginToAccessSubtitle) {
+            messages.push('Bilibili requires login to access subtitle.');
         }
 
         if (messages.length === 0) {

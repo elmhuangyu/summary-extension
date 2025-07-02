@@ -3,15 +3,13 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import 'iconify-icon';
 import '@/lib/settings';
-import { tabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab, PageContext } from './tab-helper';
+import { TabInfo, emptyTab, getCurrentWindowId, getCurrentActiveTab, PageContext } from './tab-helper';
 import './warning-message';
 import { WarningMessageComponent } from './warning-message';
 import './response-area';
 import { ResponseAreaComponent } from './response-area';
 import { debugLog } from '@/lib/debug';
 import { AppSettings, loadSettingsFromExtensionLocal } from '@/lib/settings';
-import { getBody } from '@/lib/content-extract';
-import { createMarkdownContent } from '@/third_party/obsidian-clipper/src/utils/markdown-converter';
 
 
 @customElement('sidepanel-component')
@@ -40,7 +38,7 @@ export class SidepanelComponent extends LitElement {
     private settingsUnwatch: () => void = () => { };
 
     @property({ type: Object })
-    private currentTab: tabInfo = emptyTab;
+    private currentTab: TabInfo = emptyTab;
 
     @state()
     private windowId: number = 0;
@@ -235,20 +233,28 @@ export class SidepanelComponent extends LitElement {
             this.windowId = windowId;
         }
         this.currentTab = await getCurrentActiveTab();
-        this.updateInvalidTabWarning();
-        this.updatePrivateSiteWarning();
+        this.updateWarnings();
     }
 
     private async handleTabChange(activeInfo: { tabId: number; windowId?: number }) {
         if (activeInfo.windowId && activeInfo.windowId === this.windowId) {
             this.currentTab = await getCurrentActiveTab();
-            this.updateInvalidTabWarning();
+            this.updateWarnings();
+        }
+    }
+
+    private async updateWarnings() {
+        this.warningMessage.clearWarnings();
+        this.updateInvalidTabWarning();
+
+        if (this.currentTab.validUrl) {
             this.updatePrivateSiteWarning();
+            this.updateVideoSiteWarning();
         }
     }
 
     private updateInvalidTabWarning() {
-        this.warningMessage.invalidTab = !this.currentTab.valid_url;
+        this.warningMessage.invalidTab = !this.currentTab.validUrl;
     }
 
     protected firstUpdated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>): void {
@@ -275,6 +281,24 @@ export class SidepanelComponent extends LitElement {
         const currentUrlHost = new URL(this.currentTab.url).hostname;
         const isPrivateSite = this.settings.privateSites.some(site => currentUrlHost === site);
         this.warningMessage.notPrivateAiProviderOnPrivateSite = isPrivateSite && (!model || !model.isPrivate);
+    }
+
+    private async updateVideoSiteWarning() {
+        if (!this.currentTab.isBilibiliVideo && !this.currentTab.isYoutubeVideo) {
+            return;
+        }
+
+        if (this.settings.subService.address === '') {
+            this.warningMessage.noSubtitleServiceSetup = true;
+        }
+
+        if (this.currentTab.isYoutubeVideo && !await this.currentTab.hasYoutubeSubtitle()) {
+            this.warningMessage.videoDoesNotHaveSubtitle = true;
+        }
+
+        if (this.currentTab.isBilibiliVideo && !await this.currentTab.bilibiliLoggedin()) {
+            this.warningMessage.bilibiliRequiresLoginToAccessSubtitle = true;
+        }
     }
 
     private handleClearClick() {

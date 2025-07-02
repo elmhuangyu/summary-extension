@@ -322,6 +322,7 @@ export class SidepanelComponent extends LitElement {
         this.isChatRequestRunning = true;
         const ctx = new PageContext(this.currentTab, this.settings);
         try {
+            this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
             this.responseAreaComponent.toggleLoading(true);
 
             const content = await ctx.getPageContent();
@@ -335,8 +336,6 @@ export class SidepanelComponent extends LitElement {
             if (!model) {
                 return;
             }
-
-            this.responseAreaComponent.addMessage('user', 'Summarize this page', this.currentTab.title, this.currentTab.favicon);
 
             const prompt = `${ctx.summaryPrompt()}
 
@@ -371,6 +370,7 @@ ${ctx.hints()}`;
         this.isChatRequestRunning = true;
         const ctx = new PageContext(this.currentTab, this.settings);
         try {
+            this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.responseAreaComponent.toggleLoading(true);
 
             const content = await ctx.getPageContent();
@@ -388,7 +388,6 @@ ${ctx.hints()}`;
             
     ${ctx.hints()}`;
 
-            this.responseAreaComponent.addMessage('user', this.chatInputText, this.currentTab.title, this.currentTab.favicon);
             this.chatInputText = ''; // Clear input after sending
 
             const resp = await model.chatWithContent(prompt, content, ctx.contentType(), this.settings.getSystemPrompt(), this.thinkingModeEnabled);

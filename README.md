@@ -72,4 +72,4 @@ The Subtitle extract service code is located in the `sub-service` directory. It 
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache 2.0 License](LICENSE).

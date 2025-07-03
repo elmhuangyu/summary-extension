@@ -31,7 +31,7 @@
     "marked": "^15.0.12",
     "mathml-to-latex": "^1.5.0",
     "mime": "^4.0.7",
-    "openai": "^5.5.1",
+    "openai": "^5.8.2",
     "turndown": "^7.2.0"
   }
 }

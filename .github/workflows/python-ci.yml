@@ -3,8 +3,12 @@ name: Python CI
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'sub-service/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'sub-service/**'
 
 jobs:
   build:

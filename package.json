@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/node": "^24.0.3",
     "@types/turndown": "^5.0.5",
-    "@types/webextension-polyfill": "^0.10.0",
+    "@types/webextension-polyfill": "^0.12.3",
     "typescript": "^5.8.3",
     "wxt": "^0.20.6"
   },

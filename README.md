@@ -13,7 +13,7 @@ This browser extension helps you summarize and chat about the content of the cur
 
 ### Install the extension
 
-(TODO) From Chrome Web Store.
+[Chrome Web Store](https://chromewebstore.google.com/detail/AI%20Page%20Assistant/ebfopfeijndiagimbbaoajjknahobnjp)
 
 ### Subtitle Extraction Service (Optional)
 

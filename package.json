@@ -28,7 +28,7 @@
     "iconify-icon": "^3.0.0",
     "isomorphic-dompurify": "^2.25.0",
     "lit": "^3.3.0",
-    "marked": "^16.0.0",
+    "marked": "^16.1.1",
     "mathml-to-latex": "^1.5.0",
     "mime": "^4.0.7",
     "openai": "^5.8.2",

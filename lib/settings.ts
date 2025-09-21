@@ -8,7 +8,7 @@ export const allowedOpenAiModels = [
 ];
 
 export const allowedGeminiModels = [
-    'gemini-2.5-flash-lite-preview-06-17',
+    'gemini-2.5-flash-lite',
     'gemini-2.5-flash',
     'gemini-2.5-pro',
     'gemini-2.0-flash',
@@ -19,7 +19,7 @@ const maxInputTokens = new Map<string, number>([
     ['gpt-4.1-nano', 1024 * 1024],
     ['gpt-4.1-mini', 1024 * 1024],
     ['gpt-4o-mini', 128 * 1000],
-    ['gemini-2.5-flash-lite-preview-06-17', 1024 * 1024],
+    ['gemini-2.5-flash-lite', 1024 * 1024],
     ['gemini-2.5-flash', 1024 * 1024],
     ['gemini-2.5-pro', 1024 * 1024],
     ['gemini-2.0-flash', 1024 * 1024],

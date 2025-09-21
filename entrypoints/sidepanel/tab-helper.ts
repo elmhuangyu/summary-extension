@@ -138,7 +138,7 @@ export class PageContext {
         } else if (this.ty === pageType.Video) {
             return 'summarize the video using its subtitle';
         }
-        return 'summarize this page';
+        return 'summarize content of this page';
     }
 
     public contentType(): string {

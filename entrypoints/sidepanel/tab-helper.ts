@@ -138,7 +138,7 @@ export class PageContext {
         } else if (this.ty === pageType.Video) {
             return 'summarize the video using its subtitle';
         }
-        return 'summarize content of this page';
+        return 'summarize content of this page, the markdown may contains page structure and ads, please ignore them';
     }
 
     public contentType(): string {

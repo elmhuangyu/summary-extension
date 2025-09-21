@@ -6,7 +6,7 @@ export default defineConfig({
     manifest: {
         "manifest_version": 3,
         "name": "AI Page Assistant",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "description": "Use AI to summarize and chat about the current web page.",
         "host_permissions": [ "*://*/*" ],
         "permissions": [

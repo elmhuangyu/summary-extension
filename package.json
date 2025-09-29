@@ -22,7 +22,7 @@
     "wxt": "^0.20.11"
   },
   "dependencies": {
-    "@google/genai": "^1.19.0",
+    "@google/genai": "^1.21.0",
     "@wxt-dev/webextension-polyfill": "^1.0.0",
     "gpt-tokenizer": "^3.0.1",
     "iconify-icon": "^3.0.1",

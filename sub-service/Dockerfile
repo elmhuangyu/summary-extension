@@ -1,7 +1,7 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
-# Install uv.
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install uv, ca-certificates, and deno via apk.
+RUN apk add --no-cache ca-certificates uv deno
 
 # Copy the application into the container.
 COPY . /app

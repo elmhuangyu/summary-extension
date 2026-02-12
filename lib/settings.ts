@@ -4,25 +4,29 @@ import { Provider, Model } from "./llm";
 export const allowedOpenAiModels = [
     'gpt-4.1-nano',
     'gpt-4.1-mini',
-    'gpt-4o-mini',
+    'gpt-5-nano',
+    'gpt-5-mini',
 ];
 
 export const allowedGeminiModels = [
     'gemini-2.5-flash-lite',
     'gemini-2.5-flash',
     'gemini-2.5-pro',
-    'gemini-2.0-flash',
+    'gemini-3-pro-preview',
+    'gemini-3-flash-preview',
 ];
 
 // model -> max input token in b.
 const maxInputTokens = new Map<string, number>([
     ['gpt-4.1-nano', 1024 * 1024],
     ['gpt-4.1-mini', 1024 * 1024],
-    ['gpt-4o-mini', 128 * 1000],
+    ['gpt-5-nano', 400 * 1000],
+    ['gpt-5-mini', 400 * 1000],
     ['gemini-2.5-flash-lite', 1024 * 1024],
     ['gemini-2.5-flash', 1024 * 1024],
     ['gemini-2.5-pro', 1024 * 1024],
-    ['gemini-2.0-flash', 1024 * 1024],
+    ['gemini-3-pro-preview', 1024 * 1024],
+    ['gemini-3-flash-preview', 1024 * 1024],
 ]);
 
 export const supportedLanguage = [

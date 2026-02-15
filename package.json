@@ -25,7 +25,7 @@
     "@google/genai": "^1.21.0",
     "@wxt-dev/webextension-polyfill": "^1.0.0",
     "gpt-tokenizer": "^3.0.1",
-    "iconify-icon": "^3.0.1",
+    "iconify-icon": "^3.0.2",
     "isomorphic-dompurify": "^2.28.0",
     "lit": "^3.3.1",
     "marked": "^16.3.0",

@@ -1,4 +1,4 @@
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 # Install uv, ca-certificates, and deno via apk.
 RUN apk add --no-cache ca-certificates uv deno
